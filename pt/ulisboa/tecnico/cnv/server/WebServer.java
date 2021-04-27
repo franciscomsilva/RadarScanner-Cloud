@@ -28,6 +28,13 @@ import javax.imageio.ImageIO;
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
+	private static int i_count = 2, b_count = 0;
+
+	public static synchronized void count(int incr) {
+		i_count += incr;
+		b_count++;
+		System.out.println("OLA");
+	}
 
 	public static void main(final String[] args) throws Exception {
 
@@ -39,6 +46,7 @@ public class WebServer {
 			System.out.println(e);
 			return;
 		}
+
 
 
 
@@ -108,6 +116,7 @@ public class WebServer {
 				i++;
 			}
 
+
 			/*
 			for(String ar : args) {
 				System.out.println("ar: " + ar);
@@ -172,6 +181,8 @@ public class WebServer {
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
 
+			//WRITE METRICS TO FILE
+			System.out.println("Number of instructions: " +i_count +" b_count: " + b_count);
 
 			os.close();
 

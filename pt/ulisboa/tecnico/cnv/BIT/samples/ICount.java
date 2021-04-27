@@ -15,6 +15,7 @@
 import BIT.highBIT.*;
 import java.io.*;
 import java.util.*;
+import pt.ulisboa.tecnico.cnv.server.WebServer;
 
 
 public class ICount {
@@ -27,6 +28,7 @@ public class ICount {
     public static void main(String argv[]) {
         File file_in = new File(argv[0]);
         String infilenames[] = file_in.list();
+
         
         for (int i = 0; i < infilenames.length; i++) {
             String infilename = infilenames[i];
@@ -38,11 +40,12 @@ public class ICount {
                 // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-					routine.addBefore("ICount", "mcount", new Integer(1));
+					//routine.addBefore("ICount", "mcount", new Integer(1));
                     
                     for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                         BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("ICount", "count", new Integer(bb.size()));
+                        bb.addBefore("pt/ulisboa/tecnico/cnv/server/WebServer", "count", new Integer(bb.size()));
+                        //bb.addBefore("ICount", "count", new Integer(bb.size()));
                     }
                 }
                 ci.addAfter("ICount", "printICount", ci.getClassName());
