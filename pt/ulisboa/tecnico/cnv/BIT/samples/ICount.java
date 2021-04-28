@@ -12,7 +12,7 @@
  * University of Colorado at Boulder (303) 492-5647.
 	 */
 
-package samples;
+package pt.ulisboa.tecnico.cnv.BIT.samples;
 
 import BIT.highBIT.*;
 import java.io.*;
@@ -23,6 +23,7 @@ import java.util.*;
 public class ICount {
     private static PrintStream out = null;
     private static int i_count = 0, b_count = 0, m_count = 0;
+    private static String id = null;
     
     /* main reads in all the files class files present in the input directory,
      * instruments them, and outputs them to the specified output directory.
@@ -47,14 +48,15 @@ public class ICount {
                 // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-					routine.addBefore("ICount", "mcount", new Integer(1));
+					routine.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "mcount", new Integer(1));
                     
                     for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                         BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("ICount", "count", new Integer(bb.size()));
+                        bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "count", new Integer(bb.size()));
+                        //bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "setId", new String(Thread.currentThread().getId()));
                     }
                 }
-                ci.addAfter("ICount", "printICount", ci.getClassName());
+                ci.addAfter("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "printICount", ci.getClassName());
                 ci.write(argv[1] + System.getProperty("file.separator") + infilename);
             }
         }
@@ -68,9 +70,23 @@ public class ICount {
         return i_count;
     }
 
+    public static synchronized String getId(){
+        return id;
+    }
+
+    public static synchronized void reset(){
+        i_count = 0;
+        b_count = 0;
+        m_count = 0;
+    }
+
     public static synchronized void count(int incr) {
         i_count += incr;
         b_count++;
+    }
+
+    public static synchronized void setId(String id) {
+        id = id;
     }
 
     public static synchronized void mcount(int incr) {

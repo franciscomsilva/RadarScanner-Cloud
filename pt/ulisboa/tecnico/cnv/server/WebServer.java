@@ -19,14 +19,13 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import pt.ulisboa.tecnico.cnv.solver.*;
-import samples.ICount;
+import pt.ulisboa.tecnico.cnv.BIT.samples.ICount;
 
 import javax.imageio.ImageIO;
 
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
-	static ICount ic;
 
 	public static void main(final String[] args) throws Exception {
 
@@ -178,14 +177,13 @@ public class WebServer {
 			Files.copy(responseFile.toPath(), os);
 
 			//WRITE METRICS TO FILE
-
+			System.out.println("Number of instructions: " + ICount.getICount());
+			//System.out.println("Thread ID: " + ICount.getId());
+			ICount.reset();
 
 			os.close();
 
 			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
-
-
-			System.out.println("Number of instructions: " +ic.getICount());
 
 
 		}
