@@ -26,7 +26,6 @@ import javax.imageio.ImageIO;
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
-	static ICount ic;
 
 	public static void main(final String[] args) throws Exception {
 
@@ -62,8 +61,6 @@ public class WebServer {
 	}
 
 	static class MyHandler implements HttpHandler {
-
-
 		@Override
 		public void handle(final HttpExchange t) throws IOException {
 
@@ -185,7 +182,7 @@ public class WebServer {
 			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
 
 
-			System.out.println("Number of instructions: " +ic.getICount());
+			System.out.println("Number of instructions: " +ICount.getICount());
 
 
 		}

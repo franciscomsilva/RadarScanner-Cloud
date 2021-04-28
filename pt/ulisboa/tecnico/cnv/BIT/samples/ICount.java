@@ -10,12 +10,14 @@
  * or wish to have others use BIT for commercial purposes please contact,
  * Stephen V. O'Neil, Director, Office of Technology Transfer at the
  * University of Colorado at Boulder (303) 492-5647.
- */
+	 */
+
+package samples;
 
 import BIT.highBIT.*;
 import java.io.*;
 import java.util.*;
-import pt.ulisboa.tecnico.cnv.server.WebServer;
+
 
 
 public class ICount {
@@ -25,6 +27,11 @@ public class ICount {
     /* main reads in all the files class files present in the input directory,
      * instruments them, and outputs them to the specified output directory.
      */
+
+    public ICount(){
+
+    }
+
     public static void main(String argv[]) {
         File file_in = new File(argv[0]);
         String infilenames[] = file_in.list();
@@ -40,12 +47,11 @@ public class ICount {
                 // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-					//routine.addBefore("ICount", "mcount", new Integer(1));
+					routine.addBefore("ICount", "mcount", new Integer(1));
                     
                     for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                         BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("pt/ulisboa/tecnico/cnv/server/WebServer", "count", new Integer(bb.size()));
-                        //bb.addBefore("ICount", "count", new Integer(bb.size()));
+                        bb.addBefore("ICount", "count", new Integer(bb.size()));
                     }
                 }
                 ci.addAfter("ICount", "printICount", ci.getClassName());
@@ -57,7 +63,10 @@ public class ICount {
     public static synchronized void printICount(String foo) {
         System.out.println(i_count + " instructions in " + b_count + " basic blocks were executed in " + m_count + " methods.");
     }
-    
+
+    public static synchronized int getICount(){
+        return i_count;
+    }
 
     public static synchronized void count(int incr) {
         i_count += incr;
