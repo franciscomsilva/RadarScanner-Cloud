@@ -19,7 +19,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import pt.ulisboa.tecnico.cnv.solver.*;
-import pt.ulisboa.tecnico.cnv.BIT.tools.ICount;
+import pt.ulisboa.tecnico.cnv.BIT.tools.*;
 
 import javax.imageio.ImageIO;
 
@@ -65,7 +65,6 @@ public class WebServer {
 
 		@Override
 		public void handle(final HttpExchange t) throws IOException {
-
 			// Get the query.
 			final String query = t.getRequestURI().getQuery();
 
@@ -175,12 +174,17 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
-			
-			ICount.setId(String.valueOf(Thread.currentThread().getId()));
-			//WRITE METRICS TO FILE
-			System.out.println("Number of instructions: " + ICount.getICount());
-			//System.out.println("Thread ID: " + ICount.getId());
-			ICount.reset();
+
+			//GET AND PRINT METRICS
+			long thread_id = Thread.currentThread().getId();
+
+			System.out.println("Thread ID: " + String.valueOf(thread_id));
+			System.out.println("Number of instructions: " + ICount.getICount(thread_id));
+			System.out.println("Number of Loads: " + LoadStoreCount.getLoadCount(thread_id));
+			System.out.println("Number of Store: " + LoadStoreCount.getStoreCount(thread_id));
+
+			ICount.reset(thread_id);
+			LoadStoreCount.reset(thread_id);
 
 			os.close();
 

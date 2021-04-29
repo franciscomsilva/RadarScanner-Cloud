@@ -22,8 +22,8 @@ import java.util.*;
 
 public class ICount {
     private static PrintStream out = null;
-    private static int i_count = 0, b_count = 0, m_count = 0;
-    private static String id = null;
+    private static int b_count = 0, m_count = 0;
+    private static HashMap<Long,Integer> icount_threadId = new HashMap<>();
     
     /* main reads in all the files class files present in the input directory,
      * instruments them, and outputs them to the specified output directory.
@@ -37,7 +37,6 @@ public class ICount {
         File file_in = new File(argv[0]);
         String infilenames[] = file_in.list();
 
-        
         for (int i = 0; i < infilenames.length; i++) {
             String infilename = infilenames[i];
             if (infilename.endsWith(".class")) {
@@ -48,49 +47,45 @@ public class ICount {
                 // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-					routine.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "mcount", new Integer(1));
+					routine.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "mcount", new Integer(1));
                     
                     for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                         BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "count", new Integer(bb.size()));
-                        //bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "setId", new String(Thread.currentThread().getId()));
+                        bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "count", new Integer(bb.size()));
                     }
                 }
-                ci.addAfter("pt/ulisboa/tecnico/cnv/BIT/samples/ICount", "printICount", ci.getClassName());
+                ci.addAfter("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "printICount", ci.getClassName());
                 ci.write(argv[1] + System.getProperty("file.separator") + infilename);
             }
         }
     }
-    
-    public static synchronized void printICount(String foo) {
-        System.out.println(i_count + " instructions in " + b_count + " basic blocks were executed in " + m_count + " methods.");
+
+   public static synchronized int getICount(long thread_id){
+        if(icount_threadId.containsKey(thread_id))
+            return icount_threadId.get(thread_id);
+
+        return -1;
     }
 
-    public static synchronized int getICount(){
-        return i_count;
-    }
-
-    public static synchronized String getId(){
-        return id;
-    }
-
-    public static synchronized void reset(){
-        i_count = 0;
+    public static synchronized void reset(long thread_id){
+        icount_threadId.remove(thread_id);
         b_count = 0;
         m_count = 0;
     }
 
     public static synchronized void count(int incr) {
+        long id = Thread.currentThread().getId();
+        int i_count = 0;
+        if(icount_threadId.containsKey(id))
+            i_count = icount_threadId.get(id);
         i_count += incr;
+        icount_threadId.put(id,i_count);
         b_count++;
     }
-
-    public static synchronized void setId(String id) {
-        id = id;
-    }
-
+    
     public static synchronized void mcount(int incr) {
 		m_count++;
     }
+
 }
 
