@@ -19,7 +19,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import pt.ulisboa.tecnico.cnv.solver.*;
-import pt.ulisboa.tecnico.cnv.BIT.samples.ICount;
+import pt.ulisboa.tecnico.cnv.BIT.tools.ICount;
 
 import javax.imageio.ImageIO;
 
@@ -175,7 +175,8 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
-
+			
+			ICount.setId(String.valueOf(Thread.currentThread().getId()));
 			//WRITE METRICS TO FILE
 			System.out.println("Number of instructions: " + ICount.getICount());
 			//System.out.println("Thread ID: " + ICount.getId());

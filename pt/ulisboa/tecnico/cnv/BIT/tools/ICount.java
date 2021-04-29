@@ -12,7 +12,7 @@
  * University of Colorado at Boulder (303) 492-5647.
 	 */
 
-package pt.ulisboa.tecnico.cnv.BIT.samples;
+package pt.ulisboa.tecnico.cnv.BIT.tools;
 
 import BIT.highBIT.*;
 import java.io.*;
