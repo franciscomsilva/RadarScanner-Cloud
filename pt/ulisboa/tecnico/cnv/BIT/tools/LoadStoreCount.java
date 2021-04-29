@@ -5,15 +5,18 @@ import BIT.highBIT.*;
 import java.io.File;
 import java.util.*;
 
-
-
-
 public class LoadStoreCount
 {
     private static HashMap<Long,Integer> loadcount_threadId = new HashMap<>();
     private static HashMap<Long,Integer> storecount_threadId = new HashMap<>();
     private static HashMap<Long,Integer> fieldloadcount_threadId = new HashMap<>();
     private static HashMap<Long,Integer> fieldstorecount_threadId = new HashMap<>();
+
+
+    /* main reads in all the files class files present in the input directory,
+     * instruments them, and outputs them to the specified output directory.
+     * the tools counts the number of field stores, field loads and regular store and loads
+     */
 
     public static void main(String argv[]) {
 
@@ -49,7 +52,6 @@ public class LoadStoreCount
                         }
                     }
                 }
-                ci.addAfter("pt/ulisboa/tecnico/cnv/BIT/tools/LoadStoreCount", "printLoadStore", "null");
                 ci.write(out_filename);
             }
         }
@@ -95,25 +97,25 @@ public class LoadStoreCount
         }
     }
 
-    public static int getLoadCount(long thread_id){
+    public static synchronized int getLoadCount(long thread_id){
         if(loadcount_threadId.containsKey(thread_id))
             return loadcount_threadId.get(thread_id);
         return -1;
     }
 
-    public static int getStoreCount(long thread_id) {
+    public static synchronized int getStoreCount(long thread_id) {
         if(storecount_threadId.containsKey(thread_id))
             return storecount_threadId.get(thread_id);
         return -1;
     }
 
-    public static int getFieldLoadCount(long thread_id){
+    public static synchronized int getFieldLoadCount(long thread_id){
         if(fieldloadcount_threadId.containsKey(thread_id))
             return fieldloadcount_threadId.get(thread_id);
         return -1;
     }
 
-    public static int getFieldStoreCount(long thread_id){
+    public static synchronized int getFieldStoreCount(long thread_id){
         if(fieldstorecount_threadId.containsKey(thread_id))
             return fieldstorecount_threadId.get(thread_id);
         return -1;

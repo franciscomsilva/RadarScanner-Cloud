@@ -182,9 +182,17 @@ public class WebServer {
 			System.out.println("Number of instructions: " + ICount.getICount(thread_id));
 			System.out.println("Number of Loads: " + LoadStoreCount.getLoadCount(thread_id));
 			System.out.println("Number of Store: " + LoadStoreCount.getStoreCount(thread_id));
+			System.out.println("Number of New Variables: " + AllocCount.getNewCount(thread_id));
+			System.out.println("Number of New Arrays of Reference: " + AllocCount.getANewArrayCount(thread_id));
 
+
+			//WRITE METRICS TO FILE, WITH ARGUMENTS OF QUERY
+
+
+			//RESETS COUNTS
 			ICount.reset(thread_id);
 			LoadStoreCount.reset(thread_id);
+			AllocCount.reset(thread_id);
 
 			os.close();
 
