@@ -1,10 +1,7 @@
 package pt.ulisboa.tecnico.cnv.server;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,18 +15,19 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-import pt.ulisboa.tecnico.cnv.solver.Solver;
-import pt.ulisboa.tecnico.cnv.solver.SolverFactory;
-
-import pt.ulisboa.tecnico.cnv.BIT.samples.*;
+import pt.ulisboa.tecnico.cnv.solver.*;
+import pt.ulisboa.tecnico.cnv.BIT.tools.*;
 
 import javax.imageio.ImageIO;
 
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
+	static final String METRICS_FILE = "pt/ulisboa/tecnico/cnv/metrics/metrics_storage.csv";
 
 	public static void main(final String[] args) throws Exception {
+
+
 
 		try {
 			// Get user-provided flags.
@@ -39,6 +37,7 @@ public class WebServer {
 			System.out.println(e);
 			return;
 		}
+
 
 
 
@@ -60,9 +59,10 @@ public class WebServer {
 	}
 
 	static class MyHandler implements HttpHandler {
+
+
 		@Override
 		public void handle(final HttpExchange t) throws IOException {
-
 			// Get the query.
 			final String query = t.getRequestURI().getQuery();
 
@@ -71,11 +71,7 @@ public class WebServer {
 			// Break it down into String[].
 			final String[] params = query.split("&");
 
-			/*
-			for(String p: params) {
-				System.out.println(p);
-			}
-			*/
+
 
 			// Store as if it was a direct call to SolverMain.
 			final ArrayList<String> newArgs = new ArrayList<>();
@@ -107,6 +103,7 @@ public class WebServer {
 				args[i] = arg;
 				i++;
 			}
+
 
 			/*
 			for(String ar : args) {
@@ -172,10 +169,71 @@ public class WebServer {
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
 
+			//GET AND PRINT METRICS
+			long thread_id = Thread.currentThread().getId();
+			int i_count = ICount.getICount(thread_id);
+			int load_count = LoadStoreCount.getLoadCount(thread_id);
+			int store_count = LoadStoreCount.getStoreCount(thread_id);
+			int new_count =  AllocCount.getNewCount(thread_id);
+			int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
+
+			/*
+			System.out.println("Thread ID: " + String.valueOf(thread_id));
+			System.out.println("Number of instructions: " + i_count);
+			System.out.println("Number of Loads: " +load_count);
+			System.out.println("Number of Store: " + store_count);
+			System.out.println("Number of New Variables: " + new_count);
+			System.out.println("Number of New Arrays of Reference: " + new_array_reference_count);
+			 */
+
+			//RETRIEVE QUERY ARGUMENTS
+			int y1 = Integer.parseInt(params[5].split("y1=")[1]);
+			int y0 = Integer.parseInt(params[4].split("y0=")[1]);
+			int x1 = Integer.parseInt(params[3].split("x1=")[1]);
+			int x0 = Integer.parseInt(params[2].split("x0=")[1]);
+
+			int height = Integer.parseInt(params[1].split("h=")[1]);
+			int width = Integer.parseInt(params[0].split("w=")[1]);
+			String scan_type = params[8].split("s=")[1];
+			String map_image = params[9].split("i=")[1];
+
+			/*
+			System.out.println(height);
+			System.out.println(width);
+			System.out.println(scan_type);
+			System.out.println(map_image);
+			*/
+
+
+			int area = (y1 - y0) * (x1-x0);
+
+			//WRITES METRICS ALONG WITH QUERY ARGUMENTS TO FILE
+
+			try {
+				String data =  i_count + "," + load_count + "," + store_count + "," + new_count + "," + new_array_reference_count + "," +
+						height + "," + width + "," + area + "," + scan_type + "," + map_image + "\n";
+				File f1 = new File(METRICS_FILE);
+				if(!f1.exists()) {
+					f1.createNewFile();
+				}
+				FileWriter fileWritter = new FileWriter(METRICS_FILE,true);
+				BufferedWriter bw = new BufferedWriter(fileWritter);
+				bw.write(data);
+				bw.close();
+			} catch(IOException e){
+				e.printStackTrace();
+			}
+
+			//RESETS COUNTS
+			ICount.reset(thread_id);
+			LoadStoreCount.reset(thread_id);
+			AllocCount.reset(thread_id);
 
 			os.close();
 
 			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
+
+
 		}
 	}
 
