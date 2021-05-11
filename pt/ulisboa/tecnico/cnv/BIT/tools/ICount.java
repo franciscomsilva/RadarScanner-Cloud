@@ -54,7 +54,6 @@ public class ICount {
                         bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "count", new Integer(bb.size()));
                     }
                 }
-                ci.addAfter("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "printICount", ci.getClassName());
                 ci.write(argv[1] + System.getProperty("file.separator") + infilename);
             }
         }
