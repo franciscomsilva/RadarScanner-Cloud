@@ -50,12 +50,22 @@ public class WebServer {
 
 
 		server.createContext("/scan", new MyHandler());
+		server.createContext("/test", new TestHandler());
+
 
 		// be aware! infinite pool of threads!
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 
 		System.out.println(server.getAddress().toString());
+	}
+
+	static class TestHandler implements HttpHandler {
+
+		@Override
+		public void handle(final HttpExchange t) throws IOException {
+			t.sendResponseHeaders(200, -1);
+		}
 	}
 
 	static class MyHandler implements HttpHandler {
