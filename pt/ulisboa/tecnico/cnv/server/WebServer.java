@@ -18,6 +18,7 @@ import com.sun.net.httpserver.HttpServer;
 import pt.ulisboa.tecnico.cnv.solver.*;
 import pt.ulisboa.tecnico.cnv.BIT.tools.*;
 
+
 import javax.imageio.ImageIO;
 
 public class WebServer {
@@ -218,7 +219,7 @@ public class WebServer {
 			int area = (y1 - y0) * (x1-x0);
 
 			//WRITES METRICS ALONG WITH QUERY ARGUMENTS TO FILE
-
+			/*
 			try {
 				String data =  i_count + "," + load_count + "," + store_count + "," + new_count + "," + new_array_reference_count + "," +
 						height + "," + width + "," + area + "," + scan_type + "," + map_image + "\n";
@@ -232,7 +233,17 @@ public class WebServer {
 				bw.close();
 			} catch(IOException e){
 				e.printStackTrace();
+			}*/
+
+			//WRITES METRICS AND QUERY ARGUMENTS TO DYNAMODB
+			try{
+				DynamoHandler.init();
+				DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count);
+			}catch(Exception e){
+				System.err.println(e.getMessage());
+				return;
 			}
+
 
 			//RESETS COUNTS
 			ICount.reset(thread_id);
