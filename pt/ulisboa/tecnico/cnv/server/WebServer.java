@@ -238,7 +238,7 @@ public class WebServer {
 			//WRITES METRICS AND QUERY ARGUMENTS TO DYNAMODB
 			try{
 				DynamoHandler.init();
-				DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count);
+				DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count,height,width,area,scan_type,map_image);
 			}catch(Exception e){
 				System.err.println(e.getMessage());
 				return;

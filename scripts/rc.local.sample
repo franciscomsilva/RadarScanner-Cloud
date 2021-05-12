@@ -13,7 +13,7 @@
 touch /var/lock/subsys/local
 cd /home/ec2-user/cnv-project
 export _JAVA_OPTIONS="-XX:-UseSplitVerifier "$_JAVA_OPTIONS
-export CLASSPATH="/home/ec2-user/cnv-project:./"
+export CLASSPATH="/home/ec2-user/cnv-project:/home/ec2-user/cnv-project/aws-java-sdk/lib/aws-java-sdk-1.11.1017.jar:/home/ec2-user/cnv-project/aws-java-sdk/third-party/lib/*:./"
 bash scripts/config-icount.sh
 bash scripts/config-all.sh
 java pt.ulisboa.tecnico.cnv.server.WebServer -address 0.0.0.0

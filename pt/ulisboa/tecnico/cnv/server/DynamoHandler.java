@@ -58,22 +58,43 @@ public class DynamoHandler {
                 .build();
     }
 
-    public static void newMetrics(int icount, int load_count, int store_count, int new_count, int new_array_count){
-        // Add an item
-        Map<String, AttributeValue> item = newItem(icount,load_count,store_count,new_count,new_array_count);
+    public static void newMetrics(int icount, int load_count, int store_count, int new_count, int new_array_count,
+                                   int height, int width, int area, String scan_type, String map_image){
+        //SAVES METRICS
+        String metric_id = UUID.randomUUID().toString().replace("-", "");
+
+        Map<String, AttributeValue> item = newMetricItem(metric_id,icount,load_count,store_count,new_count,new_array_count);
         PutItemRequest putItemRequest = new PutItemRequest(METRICS_TABLE, item);
         PutItemResult putItemResult = dynamoDB.putItem(putItemRequest);
-        System.out.println("Result: " + putItemResult);
+
+        //SAVES REQUEST ARGUMENTS
+        item = newRequestItem(UUID.randomUUID().toString().replace("-", ""),metric_id,height,width,area,scan_type,map_image);
+        putItemRequest = new PutItemRequest(REQUESTS_TABLE, item);
+        putItemResult = dynamoDB.putItem(putItemRequest);
+
     }
 
-    private static Map<String, AttributeValue> newItem(int icount, int load_count, int store_count, int new_count, int new_array_count) {
+    private static Map<String, AttributeValue> newMetricItem(String id, int icount, int load_count, int store_count, int new_count, int new_array_count) {
         Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
-        item.put("id",  new AttributeValue(UUID.randomUUID().toString().replace("-", "")));
+        item.put("id",  new AttributeValue(id));
         item.put("i_count",  new AttributeValue().withN(Integer.toString(icount)));
         item.put("load_count",  new AttributeValue().withN(Integer.toString(load_count)));
         item.put("new_array",  new AttributeValue().withN(Integer.toString(new_array_count)));
         item.put("new_count",  new AttributeValue().withN(Integer.toString(new_count)));
         item.put("store_count",  new AttributeValue().withN(Integer.toString(store_count)));
+
+        return item;
+    }
+
+    private static Map<String, AttributeValue> newRequestItem(String id,String metrics_id,int height, int width, int area, String scan_type, String map_image) {
+        Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
+        item.put("id",  new AttributeValue(id));
+        item.put("height",  new AttributeValue().withN(Integer.toString(height)));
+        item.put("width",  new AttributeValue().withN(Integer.toString(width)));
+        item.put("area",  new AttributeValue().withN(Integer.toString(area)));
+        item.put("scan_type",  new AttributeValue(scan_type));
+        item.put("map_image",  new AttributeValue(map_image));
+        item.put("metrics_id",  new AttributeValue(metrics_id));
 
         return item;
     }
