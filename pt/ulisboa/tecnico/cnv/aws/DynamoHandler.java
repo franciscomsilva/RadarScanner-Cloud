@@ -63,12 +63,12 @@ public class DynamoHandler {
         dynamoDB = new DynamoDB(dynamoDBClient);
     }
 
-    public static ArrayList<Request> getRequests(){
+    public static HashMap<String, Request>  getRequests(){
 
         Table requests_table = dynamoDB.getTable(REQUESTS_TABLE);
-        ArrayList<Request> newRequests = new ArrayList<>();
+        HashMap<String, Request> newRequests = new HashMap<>();
 
-        ScanSpec scanSpec = new ScanSpec().withProjectionExpression("area, map_image, metrics_id,scan_type,width,height");
+        ScanSpec scanSpec = new ScanSpec().withProjectionExpression("id,area, map_image, metrics_id,scan_type,width,height");
 
         try {
             ItemCollection<ScanOutcome> items = requests_table.scan(scanSpec);
@@ -76,8 +76,8 @@ public class DynamoHandler {
             Iterator<Item> iter = items.iterator();
             while (iter.hasNext()) {
                 Item item = iter.next();
-                Request request = new Request(item.getString("metrics_id"), item.getInt("area"), item.getInt("height"), item.getInt("width"), item.getString("map_image"), item.getString("scan_type"));
-                newRequests.add(request);
+                Request request = new Request(item.getString("id"),item.getString("metrics_id"), item.getInt("area"), item.getInt("height"), item.getInt("width"), item.getString("map_image"), item.getString("scan_type"));
+                newRequests.put(request.getId(),request);
             }
 
         }
@@ -90,10 +90,37 @@ public class DynamoHandler {
         return newRequests;
     }
 
-    public static ArrayList<Metric> getMetrics(String metrics_id){
+    public static HashMap<String,Metric> getMetrics(){
 
         Table metrics_table = dynamoDB.getTable(METRICS_TABLE);
-        ArrayList<Metric> metrics = new ArrayList<>();
+        HashMap<String, Metric> metrics = new HashMap<>();
+
+        ScanSpec scanSpec = new ScanSpec().withProjectionExpression("id,i_count,load_count, new_array, new_count,store_count");
+
+        try {
+            ItemCollection<ScanOutcome> items = metrics_table.scan(scanSpec);
+
+            Iterator<Item> iter = items.iterator();
+            while (iter.hasNext()) {
+                Item item = iter.next();
+                Metric metric = new Metric(item.getString("id"),item.getInt("i_count"), item.getInt("load_count"), item.getInt("new_array"),item.getInt("new_count"),item.getInt("store_count"));
+                metrics.put(metric.getId(),metric);
+            }
+
+        }
+        catch (Exception e) {
+            System.err.println("Unable to scan the table:");
+            System.err.println(e.getMessage());
+        }
+
+
+        return metrics;
+    }
+
+    public static HashMap<String,Metric> getMetric(String metrics_id){
+
+        Table metrics_table = dynamoDB.getTable(METRICS_TABLE);
+        HashMap<String,Metric> metrics = new HashMap<>();
 
         HashMap<String, Object> valueMap = new HashMap<String, Object>();
         valueMap.put(":metric_id", metrics_id);
@@ -111,9 +138,10 @@ public class DynamoHandler {
             iterator = items.iterator();
             while (iterator.hasNext()) {
                 item = iterator.next();
-                metrics.add(new Metric(item.getInt("i_count"), item.getInt("load_count"), item.getInt("new_array"),item.getInt("new_count"),item.getInt("store_count")));
-            }
+                Metric metric = new Metric(item.getString("id"), item.getInt("i_count"), item.getInt("load_count"), item.getInt("new_array"), item.getInt("new_count"), item.getInt("store_count"));
+                metrics.put(metric.getId(), metric);
 
+            }
         }
         catch (Exception e) {
             System.err.println("Unable to query movies from 1985");

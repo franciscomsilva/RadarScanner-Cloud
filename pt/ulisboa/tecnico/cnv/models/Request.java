@@ -3,19 +3,29 @@ package pt.ulisboa.tecnico.cnv.models;
 
 public class Request {
     String metrics_id;
+    String id;
     int area;
     int height;
     int width;
     String map_image;
     String scan_type;
 
-    public Request( String metrics_id, int area, int height, int width, String map_image, String scan_type) {
+    public Request( String id,String metrics_id, int area, int height, int width, String map_image, String scan_type) {
+        this.id = id;
         this.metrics_id = metrics_id;
         this.area = area;
         this.height = height;
         this.width = width;
         this.map_image = map_image;
         this.scan_type = scan_type;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getMetrics_id() {

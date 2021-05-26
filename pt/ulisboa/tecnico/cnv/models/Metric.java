@@ -2,13 +2,15 @@ package pt.ulisboa.tecnico.cnv.models;
 
 
 public class Metric {
+    String id;
     int i_count;
     int load_count;
     int new_array;
     int new_count;
     int store_count;
 
-    public Metric( int i_count, int load_count, int new_array, int new_count, int store_count) {
+    public Metric( String id,int i_count, int load_count, int new_array, int new_count, int store_count) {
+        this.id = id;
         this.i_count = i_count;
         this.load_count = load_count;
         this.new_array = new_array;
@@ -16,6 +18,13 @@ public class Metric {
         this.store_count = store_count;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public int getI_count() {
         return i_count;
