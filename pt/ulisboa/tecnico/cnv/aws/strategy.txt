@@ -1,0 +1,4 @@
+- Criar uma equação para descrever a carga de uma instancia (tendo em contas as metricas instrumentadas)
+- Guardar HashMap<id instancia, valor de carga>
+- LB: Distribuir os pedidos para as instancias com < valor de carga
+- AS: Ter em conta a CPU utilization +  valor de carga total para ter uma ideia da carga total do sistema, e com isso criar ou remover instancias

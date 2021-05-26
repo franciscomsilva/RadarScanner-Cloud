@@ -18,6 +18,8 @@ import com.sun.net.httpserver.HttpServer;
 import pt.ulisboa.tecnico.cnv.solver.*;
 import pt.ulisboa.tecnico.cnv.BIT.tools.*;
 
+import pt.ulisboa.tecnico.cnv.aws.*;
+
 
 import javax.imageio.ImageIO;
 
