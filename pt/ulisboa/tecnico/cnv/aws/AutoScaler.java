@@ -51,6 +51,7 @@ public class AutoScaler {
             /*IF NOT, CREATE ONE*/
             if(instances.size() <= 0){
                 createInstances(1);
+                Thread.sleep(3000);
                 instances = getInstances();
             }
 
@@ -63,7 +64,7 @@ public class AutoScaler {
             global_cpu_average = global_cpu_average / instances.size();
 
 
-            /* IF THE LOAD IS ABOVE 60% WE CHECK THE SAVED METRICS ON THE LB*/
+            /* IF THE LOAD IS ABOVE 70% WE CHECK THE SAVED METRICS ON THE LB*/
             if(global_cpu_average > CPU_UPPER_LOAD){
                 int global_metric_load = 0, counter = 0;
                 for (Map.Entry<String, Integer> entry : LoadBalancer.instance_load.entrySet()) {
@@ -73,19 +74,20 @@ public class AutoScaler {
 
                 global_metric_load = global_metric_load / counter;
 
+                /*IF ABOVE ADDS INSTANCE OTHERWISE DOES NOTHING*/
                 if(global_metric_load > METRIC_UPPER_LOAD){
                     /*ADDS INSTANCE*/
                     createInstances(1);
                 }
 
             }
-            /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) | LOOPS MAX THREE TIMES IN CASE THERE ARE NO INSTANCE WITH LOAD 0 */
+            /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) | LOOPS MAX THREE TIMES IN CASE THERE ARE NO INSTANCEs WITH LOAD 0 AT THE TIME*/
             else if (global_cpu_average < CPU_LOWER_LOAD){
                 int counter = 0;
                 String instance_id;
                 boolean exit_flag = false;
                 while(!exit_flag && counter < 3){
-                    for(Instance : instance){
+                    for(Instance instance : instances){
                         /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
                         if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
                             terminateInstance(instance.getInstanceId());
