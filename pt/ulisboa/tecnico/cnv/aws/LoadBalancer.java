@@ -121,8 +121,6 @@ public class LoadBalancer {
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
 
-        requests.put("ola", new Request());
-        instance_load.put("Ola", 123);
 
     }
 
@@ -157,7 +155,8 @@ public class LoadBalancer {
 
             final String query = t.getRequestURI().getQuery();
 
-            System.out.println("> LB Received Query:\t" + query);
+            System.out.println("LB -> Received query: " + query);
+
 
             // Break it down into String[].
             final String[] params = query.split("&");
@@ -360,7 +359,7 @@ public class LoadBalancer {
 
             /*GET INSTANCES*/
             Instance instance = instance_by_id.get(instance_id);
-
+            System.out.println("LB -> Redirecting request to instance " + instance_id);
 
             /*ROUTE REQUEST TO THAT INSTANCE*/
             /*ADDS LOAD*/
@@ -399,7 +398,7 @@ public class LoadBalancer {
             in.close();
             connection.disconnect();
 
-            System.out.println("LB -> Sent response to " + t.getRemoteAddress().toString());
+            System.out.println("LB -> Sent response back to " + t.getRemoteAddress().toString());
 
             /*REMOVES LOAD*/
             current_instance_load = instance_load.get(instance_id);

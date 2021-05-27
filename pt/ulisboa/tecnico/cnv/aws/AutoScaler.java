@@ -43,7 +43,7 @@ public class AutoScaler {
         HashSet<Instance> instances = null;
 
         while(true){
-
+            System.out.println("AS -> Checking Instances Load");
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
             instances = getInstances();
 
@@ -77,6 +77,7 @@ public class AutoScaler {
                 /*IF ABOVE ADDS INSTANCE OTHERWISE DOES NOTHING*/
                 if(global_metric_load > METRIC_UPPER_LOAD){
                     /*ADDS INSTANCE*/
+                    System.out.println("AS -> Adding one instance");
                     createInstances(1);
                 }
 
@@ -91,6 +92,7 @@ public class AutoScaler {
                         /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
                         if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
                             terminateInstance(instance.getInstanceId());
+                            System.out.println("AS -> Terminating one instance");
                             exit_flag = true;
                             break;
                         }
