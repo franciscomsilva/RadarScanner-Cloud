@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.cnv.aws;
 
 import java.io.*;
 import java.lang.Thread;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +34,10 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 public class AutoScaler {
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
+    private static final double CPU_UPPER_LOAD = 0.7;
+    private static final double CPU_LOWER_LOAD = 0.3;
+    private static final int METRIC_UPPER_LOAD = 19066472;
+
 
     public static void execute() throws InterruptedException{
         HashSet<Instance> instances = null;
@@ -58,11 +64,38 @@ public class AutoScaler {
 
 
             /* IF THE LOAD IS ABOVE 60% WE CHECK THE SAVED METRICS ON THE LB*/
-            if(global_cpu_average > 0.7){
+            if(global_cpu_average > CPU_UPPER_LOAD){
+                int global_metric_load = 0, counter = 0;
+                for (Map.Entry<String, Integer> entry : LoadBalancer.instance_load.entrySet()) {
+                    global_metric_load += entry.getValue();
+                    counter++;
+                }
+
+                global_metric_load = global_metric_load / counter;
+
+                if(global_metric_load > METRIC_UPPER_LOAD){
+                    /*ADDS INSTANCE*/
+                    createInstances(1);
+                }
 
             }
-            /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) */
-            else if (global_cpu_average < 0.3){
+            /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) | LOOPS MAX THREE TIMES IN CASE THERE ARE NO INSTANCE WITH LOAD 0 */
+            else if (global_cpu_average < CPU_LOWER_LOAD){
+                int counter = 0;
+                String instance_id;
+                boolean exit_flag = false;
+                while(!exit_flag && counter < 3){
+                    for(Instance : instance){
+                        /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
+                        if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
+                            terminateInstance(instance.getInstanceId());
+                            exit_flag = true;
+                            break;
+                        }
+
+                    }
+                    counter++;
+                }
 
             }
 

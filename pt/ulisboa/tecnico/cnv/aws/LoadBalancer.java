@@ -75,7 +75,7 @@ public class LoadBalancer {
     public static HashMap<String, Request> requests = new HashMap<>();
     private static HashMap<String, Metric> metrics = new HashMap<>();
     public static HashMap<String, Integer> instance_load = new HashMap<>();
-    private static HashMap<String, Instance> instance_by_id = new HashMap<>();
+    public static HashMap<String, Instance> instance_by_id = new HashMap<>();
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
 
