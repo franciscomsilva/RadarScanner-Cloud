@@ -34,25 +34,40 @@ public class AutoScaler {
     private static AmazonCloudWatch cloudWatch;
 
     public static void execute() throws InterruptedException{
+        HashSet<Instance> instances = null;
+
         while(true){
 
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
+            instances = getInstances();
+
 
             /*IF NOT, CREATE ONE*/
+            if(instances.size() <= 0){
+                createInstances(1);
+                instances = getInstances();
+            }
 
 
-
-            /*IF THERE IS, MONITOR THEM*/
-
-
-
-            /*CREATE OR REMOVE ACCORDING TO THE CPU USAGE AND THE METRICS*/
-
-
+            /*IF THERE IS, MONITOR THEM WITH CPU USAGE AND METRICS*/
+            double global_cpu_average = 0;
+            for(Instance instance : instances){
+                global_cpu_average += getInstanceCPUAverage(instance);
+            }
+            global_cpu_average = global_cpu_average / instances.size();
 
 
+            /* IF THE LOAD IS ABOVE 60% WE CHECK THE SAVED METRICS ON THE LB*/
+            if(global_cpu_average > 0.7){
+
+            }
+            /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) */
+            else if (global_cpu_average < 0.3){
+
+            }
 
 
+            /*SLEEPS FOR 10 SECONDS*/
             Thread.sleep(10000);
         }
 
@@ -79,8 +94,41 @@ public class AutoScaler {
 
     }
 
-    private static double getInstanceCPUAverage(String instance_id) {
-        Instance instance = instance_by_id.get(instance_id);
+    private static void terminateInstance(String instance_id){
+        TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
+        termInstanceReq.withInstanceIds(instance_id);
+        ec2.terminateInstances(termInstanceReq);
+    }
+
+    private static void createInstances (int number_instances){
+        RunInstancesRequest runInstancesRequest =
+                new RunInstancesRequest();
+
+        runInstancesRequest.withImageId("ami-a0e9d7c6")
+                .withInstanceType("t2.micro")
+                .withMinCount(1)
+                .withMaxCount(number_instances)
+                .withKeyName("jog-aws")
+                .withSecurityGroups("ssh+http8000");
+
+        RunInstancesResult runInstancesResult =
+                ec2.runInstances(runInstancesRequest);
+    }
+
+
+    private static HashSet<Instance> getInstances() {
+        DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
+        List<Reservation> reservations = describeInstancesRequest.getReservations();
+        HashSet<Instance> instances = new HashSet<>();
+
+        for (Reservation reservation : reservations) {
+            instances.addAll(reservation.getInstances());
+        }
+        return instances;
+    }
+
+    private static double getInstanceCPUAverage(Instance instance) {
+        String name = instance.getInstanceId();
         String state = instance.getState().getName();
         double final_average = 0;
         int counter = 0;
@@ -90,7 +138,7 @@ public class AutoScaler {
 
 
         if (state.equals("running")) {
-            instanceDimension.setValue(instance_id);
+            instanceDimension.setValue(name);
             GetMetricStatisticsRequest request = new GetMetricStatisticsRequest()
                     .withStartTime(new Date(new Date().getTime() - offsetInMilliseconds))
                     .withNamespace("AWS/EC2")
