@@ -20,6 +20,10 @@ public class Request {
         this.scan_type = scan_type;
     }
 
+    public Request(){
+
+    }
+
     public String getId() {
         return id;
     }

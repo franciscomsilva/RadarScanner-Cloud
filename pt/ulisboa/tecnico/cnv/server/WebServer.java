@@ -168,8 +168,6 @@ public class WebServer {
 			// Send response to browser.
 			final Headers hdrs = t.getResponseHeaders();
 
-			
-
 			hdrs.add("Content-Type", "image/png");
 
 			hdrs.add("Access-Control-Allow-Origin", "*");
