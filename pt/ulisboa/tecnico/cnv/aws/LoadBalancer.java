@@ -114,7 +114,7 @@ public class LoadBalancer {
 
 
         /*CREATES WEB SERVER*/
-        final HttpServer server = HttpServer.create(new InetSocketAddress(LoadBalancer.sap.getServerAddress(), LoadBalancer.sap.getServerPort()), 0);
+        final HttpServer server = HttpServer.create(new InetSocketAddress(LoadBalancer.sap.getServerAddress(), 80), 0);
         server.createContext("/scan", new LBHandler());
 
         // be aware! infinite pool of threads!
