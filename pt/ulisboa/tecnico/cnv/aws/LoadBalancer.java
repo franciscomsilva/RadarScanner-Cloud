@@ -120,6 +120,7 @@ public class LoadBalancer {
         // be aware! infinite pool of threads!
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
+        System.out.println("LB -> Started");
 
 
     }

@@ -179,6 +179,7 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
+			Files.copy(responseFile.toPath(), os);
 
 			//GET AND PRINT METRICS
 			long thread_id = Thread.currentThread().getId();

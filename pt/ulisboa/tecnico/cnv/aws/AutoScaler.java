@@ -41,9 +41,10 @@ public class AutoScaler {
 
     public static void execute() throws InterruptedException{
         HashSet<Instance> instances = null;
+        System.out.println("AS -> Started");
 
         while(true){
-            System.out.println("AS -> Checking Instances Load");
+            System.out.println("AS -> Checking System Load");
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
             instances = getInstances();
 
@@ -141,6 +142,7 @@ public class AutoScaler {
         RunInstancesRequest runInstancesRequest =
                 new RunInstancesRequest();
 
+        //TODO CHANGE AMI, KEYNAME AND SECURITY GROUP
         runInstancesRequest.withImageId("ami-a0e9d7c6")
                 .withInstanceType("t2.micro")
                 .withMinCount(1)
