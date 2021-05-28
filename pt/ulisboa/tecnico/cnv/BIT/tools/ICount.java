@@ -22,7 +22,6 @@ import java.util.*;
 
 public class ICount {
     private static PrintStream out = null;
-    private static int b_count = 0, m_count = 0;
     private static HashMap<Long,Integer> icount_threadId = new HashMap<>();
     
     /* main reads in all the files class files present in the input directory,
@@ -47,12 +46,8 @@ public class ICount {
                 // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
                     Routine routine = (Routine) e.nextElement();
-					routine.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "mcount", new Integer(1));
-                    
-                    for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
-                        BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "count", new Integer(bb.size()));
-                    }
+					routine.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/ICount", "count", new Integer(1));
+
                 }
                 ci.write(argv[1] + System.getProperty("file.separator") + infilename);
             }
@@ -68,8 +63,6 @@ public class ICount {
 
     public static synchronized void reset(long thread_id){
         icount_threadId.remove(thread_id);
-        b_count = 0;
-        m_count = 0;
     }
 
     public static synchronized void count(int incr) {
@@ -79,11 +72,6 @@ public class ICount {
             i_count = icount_threadId.get(id);
         i_count += incr;
         icount_threadId.put(id,i_count);
-        b_count++;
-    }
-
-    public static synchronized void mcount(int incr) {
-		m_count++;
     }
 
 }

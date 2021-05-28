@@ -37,11 +37,7 @@ public class LoadStoreCount
                     for (Enumeration instrs = (routine.getInstructionArray()).elements(); instrs.hasMoreElements(); ) {
                         Instruction instr = (Instruction) instrs.nextElement();
                         int opcode=instr.getOpcode();
-                        if (opcode == InstructionTable.getfield)
-                            instr.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/LoadStoreCount", "LSFieldCount", new Integer(0));
-                        else if (opcode == InstructionTable.putfield)
-                            instr.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/LoadStoreCount", "LSFieldCount", new Integer(1));
-                        else {
+                        if (opcode !=  InstructionTable.getfield && opcode != InstructionTable.putfield){
                             short instr_type = InstructionTable.InstructionTypeTable[opcode];
                             if (instr_type == InstructionTable.LOAD_INSTRUCTION) {
                                 instr.addBefore("pt/ulisboa/tecnico/cnv/BIT/tools/LoadStoreCount", "LSCount", new Integer(0));
@@ -58,25 +54,7 @@ public class LoadStoreCount
 
     }
 
-    public static synchronized void LSFieldCount(int type)
-    {
-        long id = Thread.currentThread().getId();
-        int fieldloadcount = 0, fieldstorecount = 0;
 
-        if (type == 0) {
-            if (fieldloadcount_threadId.containsKey(id))
-                fieldloadcount = fieldloadcount_threadId.get(id);
-            fieldloadcount++;
-            fieldloadcount_threadId.put(id,fieldloadcount);
-        }
-        else{
-            if(fieldstorecount_threadId.containsKey(id))
-                fieldstorecount = fieldstorecount_threadId.get(id);
-            fieldstorecount++;
-            fieldstorecount_threadId.put(id,fieldstorecount);
-        }
-
-    }
 
     public static synchronized void LSCount(int type)
     {
@@ -109,17 +87,6 @@ public class LoadStoreCount
         return -1;
     }
 
-    public static synchronized int getFieldLoadCount(long thread_id){
-        if(fieldloadcount_threadId.containsKey(thread_id))
-            return fieldloadcount_threadId.get(thread_id);
-        return -1;
-    }
-
-    public static synchronized int getFieldStoreCount(long thread_id){
-        if(fieldstorecount_threadId.containsKey(thread_id))
-            return fieldstorecount_threadId.get(thread_id);
-        return -1;
-    }
 
     public static synchronized void reset(long thread_id){
        storecount_threadId.remove(thread_id);
