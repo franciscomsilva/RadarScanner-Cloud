@@ -75,7 +75,7 @@ public class AutoScaler {
             /* IF THE LOAD IS ABOVE 70% WE CHECK THE SAVED METRICS ON THE LB*/
             if(global_cpu_average > CPU_UPPER_LOAD){
                 int global_metric_load = 0, counter = 0;
-                for (Map.Entry<String, Integer> entry : LoadBalancer.instance_load.entrySet()) {
+                for (Map.Entry<String, Double> entry : LoadBalancer.instance_load.entrySet()) {
                     global_metric_load += entry.getValue();
                     counter++;
                 }

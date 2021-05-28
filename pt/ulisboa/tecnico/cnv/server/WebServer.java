@@ -26,7 +26,6 @@ import javax.imageio.ImageIO;
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
-	static final String METRICS_FILE = "pt/ulisboa/tecnico/cnv/metrics/metrics_storage.csv";
 
 	public static void main(final String[] args) throws Exception {
 
@@ -179,7 +178,7 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
-
+			os.close();
 
 			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
 
@@ -257,7 +256,7 @@ public class WebServer {
 
 
 
-			os.close();
+
 
 
 

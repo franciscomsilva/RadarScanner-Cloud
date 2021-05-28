@@ -95,7 +95,7 @@ public class DynamoHandler {
         Table metrics_table = dynamoDB.getTable(METRICS_TABLE);
         HashMap<String, Metric> metrics = new HashMap<>();
 
-        ScanSpec scanSpec = new ScanSpec().withProjectionExpression("id,i_count,load_count, new_array, new_count,store_count");
+        ScanSpec scanSpec = new ScanSpec().withProjectionExpression("id,i_count,load_count,store_count");
 
         try {
             ItemCollection<ScanOutcome> items = metrics_table.scan(scanSpec);
@@ -103,7 +103,7 @@ public class DynamoHandler {
             Iterator<Item> iter = items.iterator();
             while (iter.hasNext()) {
                 Item item = iter.next();
-                Metric metric = new Metric(item.getString("id"),item.getInt("i_count"), item.getInt("load_count"), item.getInt("new_array"),item.getInt("new_count"),item.getInt("store_count"));
+                Metric metric = new Metric(item.getString("id"),item.getInt("i_count"), item.getInt("load_count"),item.getInt("store_count"));
                 metrics.put(metric.getId(),metric);
             }
 
@@ -138,7 +138,7 @@ public class DynamoHandler {
             iterator = items.iterator();
             while (iterator.hasNext()) {
                 item = iterator.next();
-                Metric metric = new Metric(item.getString("id"), item.getInt("i_count"), item.getInt("load_count"), item.getInt("new_array"), item.getInt("new_count"), item.getInt("store_count"));
+                Metric metric = new Metric(item.getString("id"), item.getInt("i_count"), item.getInt("load_count"), item.getInt("store_count"));
                 metrics.put(metric.getId(), metric);
 
             }

@@ -76,7 +76,7 @@ public class LoadBalancer {
     private static ServerArgumentParser sap = null;
     public static HashMap<String, Request> requests = new HashMap<>();
     private static HashMap<String, Metric> metrics = new HashMap<>();
-    public static HashMap<String, Integer> instance_load = new HashMap<>();
+    public static HashMap<String, Double> instance_load = new HashMap<>();
     public static HashMap<String, Instance> instance_by_id = new HashMap<>();
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
@@ -202,26 +202,18 @@ public class LoadBalancer {
 
             int i_count_scan = 0;
             int load_count_scan = 0;
-            int new_array_scan = 0;
-            int new_count_scan = 0;
             int store_count_scan = 0;
 
             int i_count_map = 0;
             int load_count_map = 0;
-            int new_array_map = 0;
-            int new_count_map = 0;
             int store_count_map = 0;
 
             int i_count_area = 0;
             int load_count_area = 0;
-            int new_array_area = 0;
-            int new_count_area = 0;
             int store_count_area = 0;
 
             double i_count_final = 0;
             double load_count_final = 0;
-            double new_array_final = 0;
-            double new_count_final = 0;
             double store_count_final = 0;
 
             int counter_scan = 0, counter_map = 0, counter_area = 0;
@@ -245,8 +237,6 @@ public class LoadBalancer {
                         Metric metric = metrics.get(entry.getValue().getMetrics_id());
                         i_count_scan += metric.getI_count();
                         load_count_scan += metric.getLoad_count();
-                        new_array_scan += metric.getNew_array();
-                        new_count_scan += metric.getNew_count();
                         store_count_scan += metric.getStore_count();
                         counter_scan++;
                     }
@@ -254,8 +244,6 @@ public class LoadBalancer {
                         Metric metric = metrics.get(entry.getValue().getMetrics_id());
                         i_count_map += metric.getI_count();
                         load_count_map += metric.getLoad_count();
-                        new_array_map += metric.getNew_array();
-                        new_count_map += metric.getNew_count();
                         store_count_map += metric.getStore_count();
                         counter_map++;
                     }
@@ -264,8 +252,6 @@ public class LoadBalancer {
                         Metric metric = metrics.get(entry.getValue().getMetrics_id());
                         i_count_area += metric.getI_count();
                         load_count_area += metric.getLoad_count();
-                        new_array_area += metric.getNew_array();
-                        new_count_area += metric.getNew_count();
                         store_count_area += metric.getStore_count();
                         counter_area++;
                     }
@@ -293,8 +279,6 @@ public class LoadBalancer {
                 if (counter_scan > 0) {
                     i_count_scan = i_count_scan / counter_scan;
                     load_count_scan = load_count_scan / counter_scan;
-                    new_array_scan = new_array_scan / counter_scan;
-                    new_count_scan = new_count_scan / counter_scan;
                     store_count_scan = store_count_scan / counter_scan;
 
                     weights_position[7] = weights_position[6] = weights_position[5] = weights_position[4] = 0;
@@ -305,8 +289,6 @@ public class LoadBalancer {
                 if (counter_map > 0) {
                     i_count_map = i_count_map / counter_map;
                     load_count_map = load_count_map / counter_map;
-                    new_array_map = new_array_map / counter_map;
-                    new_count_map = new_count_map / counter_map;
                     store_count_map = store_count_map / counter_map;
 
                     weights_position[2] = weights_position[3] = weights_position[6] = weights_position[7] = 0;
@@ -317,8 +299,6 @@ public class LoadBalancer {
                 if (counter_area > 0) {
                     i_count_area = i_count_area / counter_area;
                     load_count_area = load_count_area / counter_area;
-                    new_array_area = new_array_area / counter_area;
-                    new_count_area = new_count_area / counter_area;
                     store_count_area = store_count_area / counter_area;
 
                     weights_position[1] = weights_position[3] = weights_position[5] = weights_position[7] = 0;
@@ -334,8 +314,6 @@ public class LoadBalancer {
                 /*CALCULATES FINAL VALUES USING A PERCENTAGE OF WEIGHT THE  PARAMETERS - SCAN TYPE IS THE MOST IMPORTANTE, FOLLOWED BY MAP AND BY AREA*/
                 i_count_final = (int) scan_weight * i_count_scan + (int) map_weight * i_count_map + (int) area_weight * i_count_area;
                 load_count_final = (int) scan_weight * load_count_scan + (int) map_weight * load_count_map + (int) area_weight * load_count_area;
-                new_array_final = (int) scan_weight * new_array_scan + (int) map_weight * new_array_map + (int) area_weight * new_array_area;
-                new_count_final = (int) scan_weight * new_count_scan + (int) map_weight * new_count_map + (int) area_weight * new_count_area;
                 store_count_final = (int) scan_weight * store_count_scan + (int) map_weight * store_count_map + (int) area_weight * store_count_area;
 
                 System.out.println("HELLO 7");
@@ -346,22 +324,20 @@ public class LoadBalancer {
                 Metric final_metric = metrics.get(equalRequest.getMetrics_id());
                 i_count_final = final_metric.getI_count();
                 load_count_final = final_metric.getLoad_count();
-                new_array_final = final_metric.getNew_array();
-                new_count_final = final_metric.getNew_count();
                 store_count_final = final_metric.getStore_count();
             }
 
 
             /*CALCULATE WEIGHT BASED ON METRICS*/
-            int final_request_weight = (int) ((double) i_count_final * 0.4 + (double) load_count_final * 0.2 + (double) store_count_final * 0.2 + (double) new_array_final * 0.1 + (double) new_count_final * 0.1);
+            double final_request_weight =  ((double) i_count_final * 0.5 + (double) load_count_final * 0.25 + (double) store_count_final * 0.25) ;
             getInstances();
 
             /*ANALYZES CURRENT LOAD OF ALL INSTANCES AND CHOOSES INSTANCE WITH LEAST LOAD*/
 
-            Map.Entry<String,Integer> first_entry = instance_load.entrySet().iterator().next();
-            int min_load = first_entry.getValue();
+            Map.Entry<String,Double> first_entry = instance_load.entrySet().iterator().next();
+            double min_load = first_entry.getValue();
             String instance_id = first_entry.getKey();
-            for (Map.Entry<String, Integer> entry : instance_load.entrySet()) {
+            for (Map.Entry<String, Double> entry : instance_load.entrySet()) {
                 if (entry.getValue() < min_load) {
                     min_load = entry.getValue();
                     instance_id = entry.getKey();
@@ -374,7 +350,7 @@ public class LoadBalancer {
 
             /*ROUTE REQUEST TO THAT INSTANCE*/
             /*ADDS LOAD*/
-            int current_instance_load = instance_load.get(instance_id);
+            double current_instance_load = instance_load.get(instance_id);
             current_instance_load += final_request_weight;
             instance_load.put(instance_id, current_instance_load);
             String instance_ip = instance.getPublicIpAddress();
@@ -458,7 +434,7 @@ public class LoadBalancer {
                     String instance_id = instance.getInstanceId();
                     if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id))
                         continue;
-                    instance_load.put(instance_id, 0);
+                    instance_load.put(instance_id, 0.0);
                     instance_by_id.put(instance_id, instance);
                 }
 
