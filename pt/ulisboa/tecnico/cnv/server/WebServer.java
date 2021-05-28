@@ -59,8 +59,8 @@ public class WebServer {
 
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
-
 		System.out.println(server.getAddress().toString());
+
 	}
 
 	static class TestHandler implements HttpHandler {
@@ -179,7 +179,10 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
-			Files.copy(responseFile.toPath(), os);
+
+
+			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
+
 
 			//GET AND PRINT METRICS
 			long thread_id = Thread.currentThread().getId();
@@ -251,9 +254,10 @@ public class WebServer {
 			LoadStoreCount.reset(thread_id);
 			AllocCount.reset(thread_id);
 
+
+
 			os.close();
 
-			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
 
 
 		}

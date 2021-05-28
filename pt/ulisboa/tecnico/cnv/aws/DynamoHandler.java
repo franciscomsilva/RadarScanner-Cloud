@@ -156,9 +156,49 @@ public class DynamoHandler {
         return metrics;
     }
 
+    public static int getEqualRequest(int height, int width, int area, String scan_type, String map_image){
+
+        Table requests_table = dynamoDB.getTable(REQUESTS_TABLE);
+
+        HashMap<String, Object> valueMap = new HashMap<String, Object>();
+        valueMap.put(":height", height);
+        valueMap.put(":width", width);
+        valueMap.put(":area", area);
+        valueMap.put(":scan_type", scan_type);
+        valueMap.put(":map_image", map_image);
+
+        ScanSpec scanSpec = new ScanSpec().withFilterExpression("height = :height and width = :width and area = :area and scan_type = :scan_type and map_image = :map_image")
+                .withValueMap(valueMap);
+
+        ItemCollection<ScanOutcome> items = null;
+        Iterator<Item> iterator = null;
+        Item item = null;
+
+        int item_counter= 0;
+        try {
+            items = requests_table.scan(scanSpec);
+            iterator = items.iterator();
+            while (iterator.hasNext()) {
+                item = iterator.next();
+                item_counter++;
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Unable to query");
+            System.err.println(e.getMessage());
+        }
+
+
+        return item_counter;
+    }
+
 
     public static void newMetrics(int icount, int load_count, int store_count, int new_count, int new_array_count,
                                    int height, int width, int area, String scan_type, String map_image){
+
+        if(getEqualRequest(height, width, area,  scan_type,  map_image) > 0)
+            return;
+
         //SAVES METRICS
         String metric_id = UUID.randomUUID().toString().replace("-", "");
 
@@ -170,6 +210,8 @@ public class DynamoHandler {
         item = newRequestItem(UUID.randomUUID().toString().replace("-", ""),metric_id,height,width,area,scan_type,map_image);
         putItemRequest = new PutItemRequest(REQUESTS_TABLE, item);
         putItemResult = dynamoDBClient.putItem(putItemRequest);
+
+        System.out.println("> Saved metrics for request");
 
     }
 
