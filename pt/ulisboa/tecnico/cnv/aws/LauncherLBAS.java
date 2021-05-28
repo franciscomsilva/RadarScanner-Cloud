@@ -11,8 +11,17 @@ public class LauncherLBAS {
         LoadBalancer.init();
         LoadBalancer.execute(args);
 
-        AutoScaler.init();
-        AutoScaler.execute();
+        Thread as = new Thread() {
+            public void run() {
+                try {
+                    AutoScaler.init();
+                    AutoScaler.execute();
+                } catch(Exception e) {
+                    System.err.println(e.getMessage());
+                }
+            }
+        };
 
+        as.start();
     }
 }

@@ -34,26 +34,33 @@ import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 public class AutoScaler {
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
-    private static final double CPU_UPPER_LOAD = 0.7;
-    private static final double CPU_LOWER_LOAD = 0.3;
+    private static final double CPU_UPPER_LOAD = 70;
+    private static final double CPU_LOWER_LOAD = 30;
     private static final int METRIC_UPPER_LOAD = 19066472;
+    private static final String AMI_IMAGE_ID ="ami-05f8247ca3b3ca212";
+    private static final String SSH_KEY_NAME = "CNV-proj-key";
+    private static final String SECURITY_GROUP_NAME ="CNV-proj-ssh+http";
+    private static final String INSTANCE_TYPE_NAME = "t2.micro";
 
 
     public static void execute() throws InterruptedException{
         HashSet<Instance> instances = null;
         System.out.println("AS -> Started");
 
+
         while(true){
             System.out.println("AS -> Checking System Load");
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
             instances = getInstances();
-
-
             /*IF NOT, CREATE ONE*/
             if(instances.size() <= 0){
+                System.out.println("AS -> Adding one instance");
                 createInstances(1);
                 Thread.sleep(3000);
                 instances = getInstances();
+                /*SLEEPS FOR 10 SECONDS*/
+                Thread.sleep(10000);
+                continue;
             }
 
 
@@ -63,7 +70,7 @@ public class AutoScaler {
                 global_cpu_average += getInstanceCPUAverage(instance);
             }
             global_cpu_average = global_cpu_average / instances.size();
-
+            System.out.println("AS -> Average System CPU Load " + global_cpu_average);
 
             /* IF THE LOAD IS ABOVE 70% WE CHECK THE SAVED METRICS ON THE LB*/
             if(global_cpu_average > CPU_UPPER_LOAD){
@@ -85,23 +92,25 @@ public class AutoScaler {
             }
             /* REMOVES ONE INSTANCE THAT HAS NO REQUEST PENDENT (LOAD == 0) | LOOPS MAX THREE TIMES IN CASE THERE ARE NO INSTANCEs WITH LOAD 0 AT THE TIME*/
             else if (global_cpu_average < CPU_LOWER_LOAD){
-                int counter = 0;
-                String instance_id;
-                boolean exit_flag = false;
-                while(!exit_flag && counter < 3){
-                    for(Instance instance : instances){
-                        /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
-                        if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
-                            terminateInstance(instance.getInstanceId());
-                            System.out.println("AS -> Terminating one instance");
-                            exit_flag = true;
-                            break;
+                if(instances.size() > 1){
+                    int counter = 0;
+                    String instance_id;
+                    boolean exit_flag = false;
+                    while(!exit_flag && counter < 3){
+                        for(Instance instance : instances){
+                            /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
+                            if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
+                                terminateInstance(instance.getInstanceId());
+                                System.out.println("AS -> Terminating one instance");
+                                exit_flag = true;
+                                break;
+                            }
+
                         }
-
+                        counter++;
+                        Thread.sleep(2000);
                     }
-                    counter++;
                 }
-
             }
 
 
@@ -143,12 +152,12 @@ public class AutoScaler {
                 new RunInstancesRequest();
 
         //TODO CHANGE AMI, KEYNAME AND SECURITY GROUP
-        runInstancesRequest.withImageId("ami-a0e9d7c6")
-                .withInstanceType("t2.micro")
+        runInstancesRequest.withImageId(AMI_IMAGE_ID)
+                .withInstanceType(INSTANCE_TYPE_NAME)
                 .withMinCount(1)
                 .withMaxCount(number_instances)
-                .withKeyName("jog-aws")
-                .withSecurityGroups("ssh+http8000");
+                .withKeyName(SSH_KEY_NAME)
+                .withSecurityGroups(SECURITY_GROUP_NAME);
 
         RunInstancesResult runInstancesResult =
                 ec2.runInstances(runInstancesRequest);
@@ -161,7 +170,10 @@ public class AutoScaler {
         HashSet<Instance> instances = new HashSet<>();
 
         for (Reservation reservation : reservations) {
-            instances.addAll(reservation.getInstances());
+            for(Instance instance : reservation.getInstances()){
+                if(instance.getState().getName().equals("running") || instance.getState().getName().equals("pending"))
+                    instances.add(instance);
+            }
         }
         return instances;
     }
@@ -171,7 +183,7 @@ public class AutoScaler {
         String state = instance.getState().getName();
         double final_average = 0;
         int counter = 0;
-        long offsetInMilliseconds = 1000 * 60 * 3;
+        long offsetInMilliseconds = 1000 * 60 * 5;
         Dimension instanceDimension = new Dimension();
         instanceDimension.setName("InstanceId");
 
@@ -179,9 +191,9 @@ public class AutoScaler {
         if (state.equals("running")) {
             instanceDimension.setValue(name);
             GetMetricStatisticsRequest request = new GetMetricStatisticsRequest()
-                    .withStartTime(new Date(new Date().getTime() - offsetInMilliseconds))
+                    .withStartTime(new Date((new Date().getTime() - 1000 * 60 * 60) - offsetInMilliseconds))
                     .withNamespace("AWS/EC2")
-                    .withPeriod(30)
+                    .withPeriod(60)
                     .withMetricName("CPUUtilization")
                     .withStatistics("Average")
                     .withDimensions(instanceDimension)
@@ -192,8 +204,10 @@ public class AutoScaler {
             for (Datapoint dp : datapoints) {
                 final_average += dp.getAverage();
                 counter++;
-            }
-            final_average = (double) final_average / counter;
+            };
+
+            final_average = (double) final_average /counter == 0 ? 1 : counter;
+
         }
 
         return final_average;

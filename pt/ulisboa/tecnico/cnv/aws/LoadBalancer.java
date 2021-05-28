@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 import java.util.concurrent.Executors;
 
@@ -78,6 +80,7 @@ public class LoadBalancer {
     public static HashMap<String, Instance> instance_by_id = new HashMap<>();
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
+    private static AtomicInteger request_counter = new AtomicInteger(0);
 
 
     private static final int INSTANCE_PORT = 8000;
@@ -100,6 +103,8 @@ public class LoadBalancer {
             @Override
             public void run() {
                 try {
+                    System.out.println("LB -> Getting metrics from MSS and instances");
+                    getInstances();
                     DynamoHandler.init();
                     requests = DynamoHandler.getRequests();
                     metrics = DynamoHandler.getMetrics();
@@ -155,8 +160,8 @@ public class LoadBalancer {
             /*STARTS BY SEPARATING QUERY PARAMETERS*/
 
             final String query = t.getRequestURI().getQuery();
-
-            System.out.println("LB -> Received query: " + query);
+            int local_request_counter = request_counter.incrementAndGet();
+            System.out.println("LB -> Received query from request " + local_request_counter + " : " + query);
 
 
             // Break it down into String[].
@@ -179,17 +184,17 @@ public class LoadBalancer {
 
 
             /*DETERMINES THE WEIGHT OF THE REQUEST*/
-
+            System.out.println("HELLO 1");
             /*GETS STORED REQUESTS*/
 
             try {
                 DynamoHandler.init();
                 requests = DynamoHandler.getRequests();
-                System.out.println(requests);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return;
             }
+            System.out.println("HELLO 2");
 
             Request equalRequest = null;
             Metric finalMetrics = null;
@@ -213,11 +218,11 @@ public class LoadBalancer {
             int new_count_area = 0;
             int store_count_area = 0;
 
-            int i_count_final = 0;
-            int load_count_final = 0;
-            int new_array_final = 0;
-            int new_count_final = 0;
-            int store_count_final = 0;
+            double i_count_final = 0;
+            double load_count_final = 0;
+            double new_array_final = 0;
+            double new_count_final = 0;
+            double store_count_final = 0;
 
             int counter_scan = 0, counter_map = 0, counter_area = 0;
 
@@ -230,9 +235,11 @@ public class LoadBalancer {
                     break;
                 }
             }
+            System.out.println("HELLO 3");
 
             /*NO REQUEST EXACTLY EQUAL TO THE ONE RECEIVED*/
             if (!flagEqual) {
+                System.out.println("HELLO 4");
                 for (Map.Entry<String, Request> entry : requests.entrySet()) {
                     if (entry.getValue().getScan_type().equals(scan_type)) {
                         Metric metric = metrics.get(entry.getValue().getMetrics_id());
@@ -264,11 +271,12 @@ public class LoadBalancer {
                     }
 
                 }
+
                 double scan_weight = 0.5;
                 double map_weight = 0.3;
                 double area_weight = 0.2;
 
-                int[] weights_position = {1, 1, 1, 1, 1, 1, 1, 1};
+                Integer[] weights_position = {1, 1, 1, 1, 1, 1, 1, 1};
 
                 double[][] weights_matrix = new double[][]{
                         {0.5, 0.3, 0.3},
@@ -317,9 +325,7 @@ public class LoadBalancer {
                 } else {
                     weights_position[0] = weights_position[2] = weights_position[4] = weights_position[6] = 0;
                 }
-                int position = Arrays.asList(weights_position).indexOf(1);
-
-
+                int position =  Arrays.asList(weights_position).indexOf(1);
                 scan_weight = weights_matrix[position][0];
                 map_weight = weights_matrix[position][1];
                 area_weight = weights_matrix[position][2];
@@ -332,6 +338,8 @@ public class LoadBalancer {
                 new_count_final = (int) scan_weight * new_count_scan + (int) map_weight * new_count_map + (int) area_weight * new_count_area;
                 store_count_final = (int) scan_weight * store_count_scan + (int) map_weight * store_count_map + (int) area_weight * store_count_area;
 
+                System.out.println("HELLO 7");
+
             }
             /*GETS THE METRICS FOR THE SIMILAR STORED REQUEST*/
             else {
@@ -343,14 +351,16 @@ public class LoadBalancer {
                 store_count_final = final_metric.getStore_count();
             }
 
+
             /*CALCULATE WEIGHT BASED ON METRICS*/
             int final_request_weight = (int) ((double) i_count_final * 0.4 + (double) load_count_final * 0.2 + (double) store_count_final * 0.2 + (double) new_array_final * 0.1 + (double) new_count_final * 0.1);
-
             getInstances();
 
             /*ANALYZES CURRENT LOAD OF ALL INSTANCES AND CHOOSES INSTANCE WITH LEAST LOAD*/
-            int min_load = 0;
-            String instance_id = null;
+
+            Map.Entry<String,Integer> first_entry = instance_load.entrySet().iterator().next();
+            int min_load = first_entry.getValue();
+            String instance_id = first_entry.getKey();
             for (Map.Entry<String, Integer> entry : instance_load.entrySet()) {
                 if (entry.getValue() < min_load) {
                     min_load = entry.getValue();
@@ -360,7 +370,7 @@ public class LoadBalancer {
 
             /*GET INSTANCES*/
             Instance instance = instance_by_id.get(instance_id);
-            System.out.println("LB -> Redirecting request to instance " + instance_id);
+            System.out.println("LB -> Redirecting request " + local_request_counter + " to instance " + instance_id);
 
             /*ROUTE REQUEST TO THAT INSTANCE*/
             /*ADDS LOAD*/
@@ -377,13 +387,25 @@ public class LoadBalancer {
             hdrs.add("Access-Control-Allow-Methods", "POST, GET, HEAD, OPTIONS");
             hdrs.add("Access-Control-Allow-Headers", "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
 
-            HttpURLConnection connection = sendRequestToInstance(instance_ip, query);
+            System.out.println("HERE 1 ");
+
+            HttpURLConnection connection = null;
+            try{
+                connection = sendRequestToInstance(instance_ip, query);
+            }catch(Exception e){
+                System.err.println("ERROR: " + e.getMessage());
+                return;
+            }
+            //connection.setConnectTimeout(5000);
+            //connection.setReadTimeout(5000);
+
+            System.out.println("HERE 5 ");
 
             InputStream in = connection.getInputStream();
+            System.out.println("HERE 6");
             OutputStream os = t.getResponseBody();
 
             t.sendResponseHeaders(200, connection.getContentLength());
-
             /*SENDS RESPONSE BACK TO CLIENT*/
             try {
                 byte[] buf = new byte[8192];
@@ -399,7 +421,7 @@ public class LoadBalancer {
             in.close();
             connection.disconnect();
 
-            System.out.println("LB -> Sent response back to " + t.getRemoteAddress().toString());
+            System.out.println("LB -> Sent response from request " + local_request_counter + " back to " + t.getRemoteAddress().toString());
 
             /*REMOVES LOAD*/
             current_instance_load = instance_load.get(instance_id);
@@ -414,9 +436,12 @@ public class LoadBalancer {
     private static HttpURLConnection sendRequestToInstance(String instanceIP, String query) throws IOException {
 
         URL url = new URL("http://" + instanceIP + ":" + INSTANCE_PORT + "/scan?" + query);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-        int status = connection.getResponseCode();
+        System.out.println("HERE 2 ");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        System.out.println("HERE 3 ");
+        //int status = connection.getResponseCode();
+        System.out.println("HERE 4 ");
 
         return connection;
     }
@@ -429,11 +454,14 @@ public class LoadBalancer {
         for (Reservation reservation : reservations) {
             List<Instance> instances = reservation.getInstances();
             for (Instance instance : instances) {
-                String instance_id = instance.getInstanceId();
-                if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id))
-                    continue;
-                instance_load.put(instance_id, 0);
-                instance_by_id.put(instance_id, instance);
+                if(instance.getState().getName().equals("running") || instance.getState().getName().equals("pending")){
+                    String instance_id = instance.getInstanceId();
+                    if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id))
+                        continue;
+                    instance_load.put(instance_id, 0);
+                    instance_by_id.put(instance_id, instance);
+                }
+
             }
         }
     }

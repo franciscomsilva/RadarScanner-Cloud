@@ -56,7 +56,7 @@ public class WebServer {
 		server.createContext("/test", new TestHandler());
 
 
-		// be aware! infinite pool of threads!
+
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 
