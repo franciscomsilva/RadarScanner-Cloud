@@ -189,8 +189,8 @@ public class WebServer {
 			int i_count = ICount.getICount(thread_id);
 			int load_count = LoadStoreCount.getLoadCount(thread_id);
 			int store_count = LoadStoreCount.getStoreCount(thread_id);
-			int new_count =  AllocCount.getNewCount(thread_id);
-			int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
+			//int new_count =  AllocCount.getNewCount(thread_id);
+			//int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
 
 			/*
 			System.out.println("Thread ID: " + String.valueOf(thread_id));
@@ -242,7 +242,8 @@ public class WebServer {
 			//WRITES METRICS AND QUERY ARGUMENTS TO DYNAMODB
 			try{
 				DynamoHandler.init();
-				DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count,height,width,area,scan_type,map_image);
+				//DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count,height,width,area,scan_type,map_image);
+				DynamoHandler.newMetrics(i_count,load_count,store_count,height,width,area,scan_type,map_image);
 			}catch(Exception e){
 				System.err.println(e.getMessage());
 				return;
@@ -252,7 +253,7 @@ public class WebServer {
 			//RESETS COUNTS
 			ICount.reset(thread_id);
 			LoadStoreCount.reset(thread_id);
-			AllocCount.reset(thread_id);
+			//AllocCount.reset(thread_id);
 
 
 

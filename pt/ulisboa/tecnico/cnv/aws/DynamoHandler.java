@@ -193,7 +193,7 @@ public class DynamoHandler {
     }
 
 
-    public static void newMetrics(int icount, int load_count, int store_count, int new_count, int new_array_count,
+    public static void newMetrics(int icount, int load_count, int store_count,
                                    int height, int width, int area, String scan_type, String map_image){
 
         if(getEqualRequest(height, width, area,  scan_type,  map_image) > 0)
@@ -202,7 +202,7 @@ public class DynamoHandler {
         //SAVES METRICS
         String metric_id = UUID.randomUUID().toString().replace("-", "");
 
-        Map<String, AttributeValue> item = newMetricItem(metric_id,icount,load_count,store_count,new_count,new_array_count);
+        Map<String, AttributeValue> item = newMetricItem(metric_id,icount,load_count,store_count);
         PutItemRequest putItemRequest = new PutItemRequest(METRICS_TABLE, item);
         PutItemResult putItemResult = dynamoDBClient.putItem(putItemRequest);
 
@@ -215,13 +215,11 @@ public class DynamoHandler {
 
     }
 
-    private static Map<String, AttributeValue> newMetricItem(String id, int icount, int load_count, int store_count, int new_count, int new_array_count) {
+    private static Map<String, AttributeValue> newMetricItem(String id, int icount, int load_count, int store_count) {
         Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
         item.put("id",  new AttributeValue(id));
         item.put("i_count",  new AttributeValue().withN(Integer.toString(icount)));
         item.put("load_count",  new AttributeValue().withN(Integer.toString(load_count)));
-        item.put("new_array",  new AttributeValue().withN(Integer.toString(new_array_count)));
-        item.put("new_count",  new AttributeValue().withN(Integer.toString(new_count)));
         item.put("store_count",  new AttributeValue().withN(Integer.toString(store_count)));
 
         return item;
