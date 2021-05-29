@@ -46,16 +46,16 @@ public class AutoScaler {
 
     public static void execute() throws InterruptedException{
         HashSet<Instance> instances = null;
-        System.out.println("AS -> Started");
+        System.out.println("AS -> Started\n");
 
 
         while(true){
-            System.out.println("AS -> Checking System Load");
+            System.out.println("AS -> Checking System Load\n");
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
             instances = getInstances();
             /*IF NOT, CREATE ONE*/
             if(instances.size() <= 0){
-                System.out.println("AS -> Adding one instance");
+                System.out.println("AS -> Adding one instance\n");
                 createInstances(1);
                 Thread.sleep(3000);
                 instances = getInstances();
@@ -71,7 +71,7 @@ public class AutoScaler {
                 global_cpu_average += getInstanceCPUAverage(instance);
             }
             global_cpu_average = global_cpu_average / instances.size();
-            System.out.println("AS -> Average System CPU Load " + global_cpu_average);
+            System.out.println("AS -> Average System CPU Utilization " + String.format("%.2f", global_cpu_average) + "%\n");
 
             /* IF THE LOAD IS ABOVE 70% WE CHECK THE SAVED METRICS ON THE LB*/
             if(global_cpu_average > CPU_UPPER_LOAD){
@@ -86,7 +86,7 @@ public class AutoScaler {
                 /*IF ABOVE ADDS INSTANCE OTHERWISE DOES NOTHING*/
                 if(global_metric_load > METRIC_UPPER_LOAD){
                     /*ADDS INSTANCE*/
-                    System.out.println("AS -> Adding one instance");
+                    System.out.println("AS -> Adding one instance \n");
                     createInstances(1);
                 }
 
@@ -102,7 +102,7 @@ public class AutoScaler {
                             /*GETS THAT INSTANCE LOAD AND CHECK IF ZERO, AND IF SO REMOVES*/
                             if(LoadBalancer.instance_load.get(instance.getInstanceId()) <= 0){
                                 terminateInstance(instance.getInstanceId());
-                                System.out.println("AS -> Terminating one instance");
+                                System.out.println("AS -> Terminating one instance \n");
                                 exit_flag = true;
                                 break;
                             }
@@ -207,7 +207,10 @@ public class AutoScaler {
                 counter++;
             };
 
-            final_average = (double) final_average /counter == 0 ? 1 : counter;
+            if(counter == 0)
+                counter = 1;
+
+            final_average = (double) final_average /counter;
 
         }
 

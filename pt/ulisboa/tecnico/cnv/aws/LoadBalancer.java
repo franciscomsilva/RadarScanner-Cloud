@@ -93,7 +93,7 @@ public class LoadBalancer {
             // Get user-provided flags.
             LoadBalancer.sap = new ServerArgumentParser(args);
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return;
         }
 
@@ -103,7 +103,7 @@ public class LoadBalancer {
             @Override
             public void run() {
                 try {
-                    System.out.println("LB -> Getting metrics from MSS and instances");
+                    System.out.println("LB -> Getting metrics from MSS and instances \n");
                     getInstances();
                     DynamoHandler.init();
                     requests = DynamoHandler.getRequests();
@@ -125,7 +125,7 @@ public class LoadBalancer {
         // be aware! infinite pool of threads!
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
-        System.out.println("LB -> Started");
+        System.out.println("LB -> Started \n");
 
 
     }
@@ -161,7 +161,7 @@ public class LoadBalancer {
 
             final String query = t.getRequestURI().getQuery();
             int local_request_counter = request_counter.incrementAndGet();
-            System.out.println("LB -> Received query from request " + local_request_counter + " : " + query);
+            System.out.println("LB -> Received query from request " + local_request_counter + " : " + query + "\n");
 
 
             // Break it down into String[].
@@ -341,7 +341,7 @@ public class LoadBalancer {
 
             /*GET INSTANCES*/
             Instance instance = instance_by_id.get(instance_id);
-            System.out.println("LB -> Redirecting request " + local_request_counter + " to instance " + instance_id);
+            System.out.println("LB -> Redirecting request " + local_request_counter + " to instance " + instance_id + "\n");
 
             /*ROUTE REQUEST TO THAT INSTANCE*/
             /*ADDS LOAD*/
@@ -389,7 +389,7 @@ public class LoadBalancer {
             in.close();
             connection.disconnect();
 
-            System.out.println("LB -> Sent response from request " + local_request_counter + " back to " + t.getRemoteAddress().toString());
+            System.out.println("LB -> Sent response from request " + local_request_counter + " back to " + t.getRemoteAddress().toString() + "\n");
 
             /*REMOVES LOAD*/
             current_instance_load = instance_load.get(instance_id);
