@@ -36,8 +36,9 @@ public class AutoScaler {
     private static AmazonCloudWatch cloudWatch;
     private static final double CPU_UPPER_LOAD = 70;
     private static final double CPU_LOWER_LOAD = 30;
-    private static final int METRIC_UPPER_LOAD = 19066472;
-    private static final String AMI_IMAGE_ID ="ami-05f8247ca3b3ca212";
+    /*THIS ROUGHLY CORRESPONDS TO TWO LIGHT REQUESTS PER INSTANCE*/
+    private static final double METRIC_UPPER_LOAD = 323059012 * 2;
+    private static final String AMI_IMAGE_ID ="ami-0423040cddd106f1e";
     private static final String SSH_KEY_NAME = "CNV-proj-key";
     private static final String SECURITY_GROUP_NAME ="CNV-proj-ssh+http";
     private static final String INSTANCE_TYPE_NAME = "t2.micro";

@@ -184,7 +184,6 @@ public class LoadBalancer {
 
 
             /*DETERMINES THE WEIGHT OF THE REQUEST*/
-            System.out.println("HELLO 1");
             /*GETS STORED REQUESTS*/
 
             try {
@@ -194,7 +193,6 @@ public class LoadBalancer {
                 System.err.println(e.getMessage());
                 return;
             }
-            System.out.println("HELLO 2");
 
             Request equalRequest = null;
             Metric finalMetrics = null;
@@ -227,11 +225,9 @@ public class LoadBalancer {
                     break;
                 }
             }
-            System.out.println("HELLO 3");
 
             /*NO REQUEST EXACTLY EQUAL TO THE ONE RECEIVED*/
             if (!flagEqual) {
-                System.out.println("HELLO 4");
                 for (Map.Entry<String, Request> entry : requests.entrySet()) {
                     if (entry.getValue().getScan_type().equals(scan_type)) {
                         Metric metric = metrics.get(entry.getValue().getMetrics_id());
@@ -316,7 +312,6 @@ public class LoadBalancer {
                 load_count_final = (int) scan_weight * load_count_scan + (int) map_weight * load_count_map + (int) area_weight * load_count_area;
                 store_count_final = (int) scan_weight * store_count_scan + (int) map_weight * store_count_map + (int) area_weight * store_count_area;
 
-                System.out.println("HELLO 7");
 
             }
             /*GETS THE METRICS FOR THE SIMILAR STORED REQUEST*/
@@ -363,7 +358,6 @@ public class LoadBalancer {
             hdrs.add("Access-Control-Allow-Methods", "POST, GET, HEAD, OPTIONS");
             hdrs.add("Access-Control-Allow-Headers", "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
 
-            System.out.println("HERE 1 ");
 
             HttpURLConnection connection = null;
             try{
@@ -375,10 +369,8 @@ public class LoadBalancer {
             //connection.setConnectTimeout(5000);
             //connection.setReadTimeout(5000);
 
-            System.out.println("HERE 5 ");
 
             InputStream in = connection.getInputStream();
-            System.out.println("HERE 6");
             OutputStream os = t.getResponseBody();
 
             t.sendResponseHeaders(200, connection.getContentLength());
@@ -413,11 +405,8 @@ public class LoadBalancer {
 
         URL url = new URL("http://" + instanceIP + ":" + INSTANCE_PORT + "/scan?" + query);
 
-        System.out.println("HERE 2 ");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        System.out.println("HERE 3 ");
         //int status = connection.getResponseCode();
-        System.out.println("HERE 4 ");
 
         return connection;
     }
