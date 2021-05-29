@@ -9,8 +9,6 @@ public class LoadStoreCount
 {
     private static HashMap<Long,Integer> loadcount_threadId = new HashMap<>();
     private static HashMap<Long,Integer> storecount_threadId = new HashMap<>();
-    private static HashMap<Long,Integer> fieldloadcount_threadId = new HashMap<>();
-    private static HashMap<Long,Integer> fieldstorecount_threadId = new HashMap<>();
 
 
     /* main reads in all the files class files present in the input directory,
@@ -91,7 +89,5 @@ public class LoadStoreCount
     public static synchronized void reset(long thread_id){
        storecount_threadId.remove(thread_id);
        loadcount_threadId.remove(thread_id);
-       fieldstorecount_threadId.remove(thread_id);
-       fieldloadcount_threadId.remove(thread_id);
     }
 }
