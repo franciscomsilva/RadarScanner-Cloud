@@ -185,9 +185,9 @@ public class WebServer {
 
 			//GET AND PRINT METRICS
 			long thread_id = Thread.currentThread().getId();
-			int i_count = ICount.getICount(thread_id);
-			int load_count = LoadStoreCount.getLoadCount(thread_id);
-			int store_count = LoadStoreCount.getStoreCount(thread_id);
+			long i_count = ICount.getICount(thread_id);
+			long load_count = LoadStoreCount.getLoadCount(thread_id);
+			long store_count = LoadStoreCount.getStoreCount(thread_id);
 			//int new_count =  AllocCount.getNewCount(thread_id);
 			//int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
 

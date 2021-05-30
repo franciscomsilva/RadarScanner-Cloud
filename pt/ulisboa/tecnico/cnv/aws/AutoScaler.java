@@ -50,7 +50,6 @@ public class AutoScaler {
 
 
         while(true){
-            System.out.println("AS -> Checking System Load\n");
             /*VERIFY IF ANY INSTANCES ARE RUNNING*/
             instances = getInstances();
             /*IF NOT, CREATE ONE*/
@@ -146,6 +145,7 @@ public class AutoScaler {
         TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
         termInstanceReq.withInstanceIds(instance_id);
         ec2.terminateInstances(termInstanceReq);
+        LoadBalancer.getInstances();
     }
 
     private static void createInstances (int number_instances){
@@ -162,6 +162,8 @@ public class AutoScaler {
 
         RunInstancesResult runInstancesResult =
                 ec2.runInstances(runInstancesRequest);
+
+        LoadBalancer.getInstances();
     }
 
 
@@ -184,7 +186,7 @@ public class AutoScaler {
         String state = instance.getState().getName();
         double final_average = 0;
         int counter = 0;
-        long offsetInMilliseconds = 1000 * 60 * 5;
+        long offsetInMilliseconds = 1000 * 60 * 3;
         Dimension instanceDimension = new Dimension();
         instanceDimension.setName("InstanceId");
 
@@ -192,9 +194,10 @@ public class AutoScaler {
         if (state.equals("running")) {
             instanceDimension.setValue(name);
             GetMetricStatisticsRequest request = new GetMetricStatisticsRequest()
+                    /*UTC TO UTC-1*/
                     .withStartTime(new Date((new Date().getTime() - 1000 * 60 * 60) - offsetInMilliseconds))
                     .withNamespace("AWS/EC2")
-                    .withPeriod(60)
+                    .withPeriod(30)
                     .withMetricName("CPUUtilization")
                     .withStatistics("Average")
                     .withDimensions(instanceDimension)
@@ -203,6 +206,7 @@ public class AutoScaler {
                     cloudWatch.getMetricStatistics(request);
             List<Datapoint> datapoints = getMetricStatisticsResult.getDatapoints();
             for (Datapoint dp : datapoints) {
+                System.out.println(dp.getAverage());
                 final_average += dp.getAverage();
                 counter++;
             };

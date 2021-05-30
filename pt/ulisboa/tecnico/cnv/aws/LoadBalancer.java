@@ -103,7 +103,7 @@ public class LoadBalancer {
             @Override
             public void run() {
                 try {
-                    System.out.println("LB -> Getting metrics from MSS and instances \n");
+                    System.out.println("LB -> Getting metrics from MSS and instances from AWS\n");
                     getInstances();
                     DynamoHandler.init();
                     requests = DynamoHandler.getRequests();
@@ -114,8 +114,9 @@ public class LoadBalancer {
 
             }
         };
+
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(task, 0L, 2, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(task, 0L, 1, TimeUnit.MINUTES);
 
 
         /*CREATES WEB SERVER*/
@@ -412,7 +413,7 @@ public class LoadBalancer {
     }
 
 
-    private static void getInstances() {
+    public static void getInstances() {
         DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
         List<Reservation> reservations = describeInstancesRequest.getReservations();
 

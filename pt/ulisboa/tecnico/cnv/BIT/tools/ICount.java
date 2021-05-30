@@ -22,7 +22,7 @@
 
     public class ICount {
         private static PrintStream out = null;
-        private static HashMap<Long,Integer> icount_threadId = new HashMap<>();
+        private static HashMap<Long,Long> icount_threadId = new HashMap<>();
 
         /* main reads in all the files class files present in the input directory,
          * instruments them, and outputs them to the specified output directory.
@@ -57,7 +57,7 @@
             }
         }
 
-        public static synchronized int getICount(long thread_id){
+        public static synchronized long getICount(long thread_id){
             if(icount_threadId.containsKey(thread_id))
                 return icount_threadId.get(thread_id);
 
@@ -70,7 +70,7 @@
 
         public static synchronized void count(int incr) {
             long id = Thread.currentThread().getId();
-            int i_count = 0;
+            long i_count = 0;
             if(icount_threadId.containsKey(id))
                 i_count = icount_threadId.get(id);
             i_count += incr;

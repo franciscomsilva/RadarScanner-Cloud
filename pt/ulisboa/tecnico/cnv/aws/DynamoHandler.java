@@ -193,7 +193,7 @@ public class DynamoHandler {
     }
 
 
-    public static void newMetrics(int icount, int load_count, int store_count,
+    public static void newMetrics(long icount, long load_count, long store_count,
                                    int height, int width, int area, String scan_type, String map_image){
 
         if(getEqualRequest(height, width, area,  scan_type,  map_image) > 0)
@@ -215,12 +215,12 @@ public class DynamoHandler {
 
     }
 
-    private static Map<String, AttributeValue> newMetricItem(String id, int icount, int load_count, int store_count) {
+    private static Map<String, AttributeValue> newMetricItem(String id, long icount, long load_count, long store_count) {
         Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
         item.put("id",  new AttributeValue(id));
-        item.put("i_count",  new AttributeValue().withN(Integer.toString(icount)));
-        item.put("load_count",  new AttributeValue().withN(Integer.toString(load_count)));
-        item.put("store_count",  new AttributeValue().withN(Integer.toString(store_count)));
+        item.put("i_count",  new AttributeValue().withN(Long.toString(icount)));
+        item.put("load_count",  new AttributeValue().withN(Long.toString(load_count)));
+        item.put("store_count",  new AttributeValue().withN(Long.toString(store_count)));
 
         return item;
     }

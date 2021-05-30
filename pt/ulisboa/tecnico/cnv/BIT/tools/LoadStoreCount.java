@@ -7,8 +7,8 @@ import java.util.*;
 
 public class LoadStoreCount
 {
-    private static HashMap<Long,Integer> loadcount_threadId = new HashMap<>();
-    private static HashMap<Long,Integer> storecount_threadId = new HashMap<>();
+    private static HashMap<Long,Long> loadcount_threadId = new HashMap<>();
+    private static HashMap<Long,Long> storecount_threadId = new HashMap<>();
 
 
     /* main reads in all the files class files present in the input directory,
@@ -57,7 +57,7 @@ public class LoadStoreCount
     public static synchronized void LSCount(int type)
     {
         long id = Thread.currentThread().getId();
-        int loadcount = 0, storecount = 0;
+        long loadcount = 0, storecount = 0;
 
         if (type == 0) {
             if(loadcount_threadId.containsKey(id))
@@ -73,13 +73,13 @@ public class LoadStoreCount
         }
     }
 
-    public static synchronized int getLoadCount(long thread_id){
+    public static synchronized long getLoadCount(long thread_id){
         if(loadcount_threadId.containsKey(thread_id))
             return loadcount_threadId.get(thread_id);
         return -1;
     }
 
-    public static synchronized int getStoreCount(long thread_id) {
+    public static synchronized long getStoreCount(long thread_id) {
         if(storecount_threadId.containsKey(thread_id))
             return storecount_threadId.get(thread_id);
         return -1;
