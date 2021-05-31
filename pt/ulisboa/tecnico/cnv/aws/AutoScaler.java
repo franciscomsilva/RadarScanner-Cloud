@@ -42,6 +42,7 @@ public class AutoScaler {
     private static final String SSH_KEY_NAME = "CNV-proj-key";
     private static final String SECURITY_GROUP_NAME ="CNV-proj-ssh+http";
     private static final String INSTANCE_TYPE_NAME = "t2.micro";
+    private static final String LOAD_BALANCER_INSTANCE_ID = "i-0d10c766eabb22b17";
 
     //646118024 72141285 2183554290 2183554290
 
@@ -188,7 +189,8 @@ public class AutoScaler {
 
         for (Reservation reservation : reservations) {
             for(Instance instance : reservation.getInstances()){
-                if(instance.getState().getName().equals("running") || instance.getState().getName().equals("pending"))
+                /*EXCLUDES TERMINATING, SHUTTING-DOWN AND LOAD BALANCER INSTANCES*/
+                if((instance.getState().getName().equals("running") || instance.getState().getName().equals("pending")) && !instance.getInstanceId().equals(LOAD_BALANCER_INSTANCE_ID))
                     instances.add(instance);
             }
         }

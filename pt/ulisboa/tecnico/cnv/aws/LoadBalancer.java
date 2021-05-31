@@ -85,6 +85,8 @@ public class LoadBalancer {
     private static AmazonEC2 ec2;
     private static AmazonCloudWatch cloudWatch;
     private static AtomicInteger request_counter = new AtomicInteger(0);
+    private static final String LOAD_BALANCER_INSTANCE_ID = "i-0d10c766eabb22b17";
+
 
 
     private static final int INSTANCE_PORT = 8000;
@@ -112,6 +114,7 @@ public class LoadBalancer {
                     DynamoHandler.init();
                     requests = DynamoHandler.getRequests();
                     metrics = DynamoHandler.getMetrics();
+
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                 }
@@ -156,6 +159,7 @@ public class LoadBalancer {
         ScheduledExecutorService schedulerHealth = Executors.newScheduledThreadPool(1);
         schedulerHealth.scheduleAtFixedRate(taskHealth, 0L, 2, TimeUnit.MINUTES);
 
+        System.out.println(instance_by_id);
         /*ALLOW TO GET INSTANCES*/
         Thread.sleep(3000);
 
@@ -549,7 +553,7 @@ public class LoadBalancer {
             List<Instance> instances = reservation.getInstances();
             for (Instance instance : instances) {
                 load = 0.0;
-                if(instance.getState().getName().equals("running") || instance.getState().getName().equals("pending")){
+                if((instance.getState().getName().equals("running") || instance.getState().getName().equals("pending")) && !instance.getInstanceId().equals(LOAD_BALANCER_INSTANCE_ID)){
                     String instance_id = instance.getInstanceId();
 
                     /*IF INSTANCE ALREADY EXISTS COPYS LOAD AND UPDATE, SOME DATA MIGHT NOT BE UPDATED*/
