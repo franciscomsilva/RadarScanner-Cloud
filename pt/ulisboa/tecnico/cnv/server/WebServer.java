@@ -26,6 +26,7 @@ import javax.imageio.ImageIO;
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
+	static int N_THREADS = 4;
 
 	public static void main(final String[] args) throws Exception {
 
@@ -56,7 +57,7 @@ public class WebServer {
 
 
 
-		server.setExecutor(Executors.newCachedThreadPool());
+		server.setExecutor(Executors.newFixedThreadPool(N_THREADS));
 		server.start();
 		System.out.println(server.getAddress().toString());
 

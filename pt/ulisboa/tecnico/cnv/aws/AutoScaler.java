@@ -197,7 +197,7 @@ public class AutoScaler {
                     /*UTC TO UTC-1*/
                     .withStartTime(new Date((new Date().getTime() - 1000 * 60 * 60) - offsetInMilliseconds))
                     .withNamespace("AWS/EC2")
-                    .withPeriod(30)
+                    .withPeriod(60)
                     .withMetricName("CPUUtilization")
                     .withStatistics("Average")
                     .withDimensions(instanceDimension)
@@ -206,7 +206,7 @@ public class AutoScaler {
                     cloudWatch.getMetricStatistics(request);
             List<Datapoint> datapoints = getMetricStatisticsResult.getDatapoints();
             for (Datapoint dp : datapoints) {
-                System.out.println(dp.getAverage());
+                System.out.println(dp);
                 final_average += dp.getAverage();
                 counter++;
             };
