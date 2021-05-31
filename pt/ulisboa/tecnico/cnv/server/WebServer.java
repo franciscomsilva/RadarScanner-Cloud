@@ -18,12 +18,15 @@ import com.sun.net.httpserver.HttpServer;
 import pt.ulisboa.tecnico.cnv.solver.*;
 import pt.ulisboa.tecnico.cnv.BIT.tools.*;
 
+import pt.ulisboa.tecnico.cnv.aws.*;
+
+
 import javax.imageio.ImageIO;
 
 public class WebServer {
 
 	static ServerArgumentParser sap = null;
-	static final String METRICS_FILE = "pt/ulisboa/tecnico/cnv/metrics/metrics_storage.csv";
+	static int N_THREADS = 4;
 
 	public static void main(final String[] args) throws Exception {
 
@@ -51,11 +54,20 @@ public class WebServer {
 
 		server.createContext("/scan", new MyHandler());
 		server.createContext("/test", new TestHandler());
-		// be aware! infinite pool of threads!
-		server.setExecutor(Executors.newCachedThreadPool());
-		server.start();
 
+
+		server.setExecutor(Executors.newFixedThreadPool(N_THREADS));
+		server.start();
 		System.out.println(server.getAddress().toString());
+
+	}
+
+	static class TestHandler implements HttpHandler {
+
+		@Override
+		public void handle(final HttpExchange t) throws IOException {
+			t.sendResponseHeaders(200, -1);
+		}
 	}
 
 	static class TestHandler implements HttpHandler {
@@ -162,8 +174,6 @@ public class WebServer {
 			// Send response to browser.
 			final Headers hdrs = t.getResponseHeaders();
 
-			
-
 			hdrs.add("Content-Type", "image/png");
 
 			hdrs.add("Access-Control-Allow-Origin", "*");
@@ -175,14 +185,18 @@ public class WebServer {
 
 			final OutputStream os = t.getResponseBody();
 			Files.copy(responseFile.toPath(), os);
+			os.close();
+
+			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
+
 
 			//GET AND PRINT METRICS
 			long thread_id = Thread.currentThread().getId();
-			int i_count = ICount.getICount(thread_id);
-			int load_count = LoadStoreCount.getLoadCount(thread_id);
-			int store_count = LoadStoreCount.getStoreCount(thread_id);
-			int new_count =  AllocCount.getNewCount(thread_id);
-			int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
+			long i_count = ICount.getICount(thread_id);
+			long load_count = LoadStoreCount.getLoadCount(thread_id);
+			long store_count = LoadStoreCount.getStoreCount(thread_id);
+			//int new_count =  AllocCount.getNewCount(thread_id);
+			//int new_array_reference_count = AllocCount.getANewArrayCount(thread_id);
 
 			/*
 			System.out.println("Thread ID: " + String.valueOf(thread_id));
@@ -215,7 +229,7 @@ public class WebServer {
 			int area = (y1 - y0) * (x1-x0);
 
 			//WRITES METRICS ALONG WITH QUERY ARGUMENTS TO FILE
-
+			/*
 			try {
 				String data =  i_count + "," + load_count + "," + store_count + "," + new_count + "," + new_array_reference_count + "," +
 						height + "," + width + "," + area + "," + scan_type + "," + map_image + "\n";
@@ -229,16 +243,28 @@ public class WebServer {
 				bw.close();
 			} catch(IOException e){
 				e.printStackTrace();
+			}*/
+
+			//WRITES METRICS AND QUERY ARGUMENTS TO DYNAMODB
+			try{
+				DynamoHandler.init();
+				//DynamoHandler.newMetrics(i_count,load_count,store_count,new_count,new_array_reference_count,height,width,area,scan_type,map_image);
+				DynamoHandler.newMetrics(i_count,load_count,store_count,height,width,area,scan_type,map_image);
+			}catch(Exception e){
+				System.err.println(e.getMessage());
+				return;
 			}
+
 
 			//RESETS COUNTS
 			ICount.reset(thread_id);
 			LoadStoreCount.reset(thread_id);
-			AllocCount.reset(thread_id);
+			//AllocCount.reset(thread_id);
 
-			os.close();
 
-			System.out.println("> Sent response to " + t.getRemoteAddress().toString());
+
+
+
 
 
 		}

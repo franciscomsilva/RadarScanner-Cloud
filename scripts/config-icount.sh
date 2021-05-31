@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CLASSPATH="/home/vagrant/cnv/cnv-project:./"
+
 javac pt/ulisboa/tecnico/cnv/BIT/tools/*.java
 java pt.ulisboa.tecnico.cnv.BIT.tools.ICount pt/ulisboa/tecnico/cnv/solver/backup pt/ulisboa/tecnico/cnv/solver/output/
 cp pt/ulisboa/tecnico/cnv/solver/output/* pt/ulisboa/tecnico/cnv/solver/

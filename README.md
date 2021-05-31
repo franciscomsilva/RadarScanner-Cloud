@@ -5,29 +5,41 @@ Radar Scanner Cloud developed as final course project for the Cloud Computing & 
 Developed by [Francisco Silva](https://github.com/franciscomsilva), [Guilherme Cardoso](https://github.com/GascPT) and [Tiago Domingues](https://github.com/Dr0g0n).
 
 
-## Architecture
 
-Currently, the architecture of the system is organized in three different components:
-- AWS Load Balancer;
-- AWS Auto-scaler;
-- Web Servers.
+## AWS SDK Installation
 
-The AWS Load Balancer is the entry point of the system. It receives all web requests, and
-for each one, it selects an active web server from the cluster nodes to serve the request and forwards it to the selected server.
+Since AWS only provides the latest version of the SDK in pre-built form, and in order to avoid version mismatch between the delivery of the project
+and the actual execution, we uploaded the version of the SDK we used to the ULisboa Google Drive to facilitate the building process. The SDK
+is available for download at: https://drive.google.com/file/d/1QnI7LcJcnrwjgD52U2tMEG69IV0DTeEk/view?usp=sharing
 
-The Auto-scaler component consists of an AWS Auto-scaling group that increases and reduces the number of active web server machines according to the load of the system, measured in percentage of CPU utilization.
+After downloading, the .zip file should be extracted to the root directory (`~/cnv-project/`)
 
-The Web Servers are system virtual machines running an off-the-shelf Java-based web
-server application on top of Linux. Each one runs on an AWS Elastic Compute Cloud (EC2) instance and receives web requests to perform radar scanning tasks. The page serving the requests will perform the scanning and assessing online and, once it is complete, reply to the web request. 
+# Build and Installation
 
+This project runs on **Java Version 1.7.0_80**.
 
-## AWS System Configurations
+In the `~/cnv-project/scripts/` directory several scripts are provided to build the solution. To build the complete system, use the
+`~/cnv-project/scripts/config-all.sh` script. Run it from the root directory (`~/cnv-project/`). This will build and instrument the solution fully. 
 
-### AWS Load Balancer
+It is also necessary to define the correct classpaths. To define this execute the following commands:
 
-The only parameter that was configured in the creation of the Load Balancer was the forwarding of the traffic. In this case, the LB receives HTTP requests on port 80 and forwards them to the Web Servers through HTTP on port 8000.
+`export _JAVA_OPTIONS="-XX:-UseSplitVerifier "$_JAVA_OPTIONS`
 
+`export CLASSPATH="/home/ec2-user/cnv-project:/home/ec2-user/cnv-project/aws-java-sdk/lib/aws-java-sdk-1.11.1029.jar:/home/ec2-user/cnv-project/aws-java-sdk/third-party/lib/*:./"`
 
-### AWS Auto Scaling Group
+To run the WebServer simply run (from the root directory): `java pt.ulisboa.tecnico.cnv.server.WebServer -address 0.0.0.0`
 
-Currently, the Auto Scaling Group has a minimum capacity of 1 instance and a maximum capacity of 4 instances. The Auto Scaler manages the criation/destruction of VM intances based on the total CPU utilization. On the one hand, if the total CPU utilization of the cluster exceeds 50%, the Auto Scaler is going to add another web server instance. On the other hand, if the total CPU utilization of the cluster is below 25%, the Auto Scaler is going to remove one web server instance.
+To run both the LoadBalancer and the Auto Scaler (from the root directory): `java pt.ulisboa.tecnico.cnv.aws.LauncherLBAS -address 0.0.0.0`
+
+We also have, in the `~/cnv-project/scripts/` directory a file named `rc.local.sample` which corresponds to the rc.local file we
+placed in the Amazon Instances of the WebServer.
+
+## Structure of folders
+
+- `BIT` folder: contains the code for the BIT Tool
+- `datasets` folder: contains the map images for the Solver application
+- `scripts` folder: all the scripts used to build the project
+- `pt/ulisboa/tecnico/cnv/aws` folder: contains the code for the AWS related operation (DynamoHandler, LoadBalancer and AutoScaler)
+- `pt/ulisboa/tecnico/cnv/BIT/tools` folder: instrumentation tools developed for the application
+- `pt/ulisboa/tecnico/cnv/server` folder: the WebServer code
+- `pt/ulisboa/tecnico/cnv/solver` folder: the instrumented and original Solver code
