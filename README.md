@@ -16,8 +16,10 @@ After downloading, the .zip file should be extracted to the root directory (`~/c
 
 # Build and Installation
 
+This project runs on **Java Version 1.7.0_80**.
+
 In the `~/cnv-project/scripts/` directory several scripts are provided to build the solution. To build the complete system, use the
-`~/cnv-project/scripts/config-all.sh` script. This will build and instrument the solution fully.
+`~/cnv-project/scripts/config-all.sh` script. Run it from the root directory (`~/cnv-project/`). This will build and instrument the solution fully. 
 
 It is also necessary to define the correct classpaths. To define this execute the following commands:
 
