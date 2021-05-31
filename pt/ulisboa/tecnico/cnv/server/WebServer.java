@@ -56,7 +56,6 @@ public class WebServer {
 		server.createContext("/test", new TestHandler());
 
 
-
 		server.setExecutor(Executors.newFixedThreadPool(N_THREADS));
 		server.start();
 		System.out.println(server.getAddress().toString());
@@ -71,6 +70,13 @@ public class WebServer {
 		}
 	}
 
+	static class TestHandler implements HttpHandler {
+
+		@Override
+		public void handle(final HttpExchange t) throws IOException {
+			t.sendResponseHeaders(200, -1);
+		}
+	}
 	static class MyHandler implements HttpHandler {
 
 
