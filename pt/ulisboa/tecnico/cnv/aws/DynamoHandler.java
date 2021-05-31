@@ -103,7 +103,7 @@ public class DynamoHandler {
             Iterator<Item> iter = items.iterator();
             while (iter.hasNext()) {
                 Item item = iter.next();
-                Metric metric = new Metric(item.getString("id"),item.getInt("i_count"), item.getInt("load_count"),item.getInt("store_count"));
+                Metric metric = new Metric(item.getString("id"),item.getLong("i_count"), item.getLong("load_count"),item.getLong("store_count"));
                 metrics.put(metric.getId(),metric);
             }
 
@@ -138,7 +138,7 @@ public class DynamoHandler {
             iterator = items.iterator();
             while (iterator.hasNext()) {
                 item = iterator.next();
-                Metric metric = new Metric(item.getString("id"), item.getInt("i_count"), item.getInt("load_count"), item.getInt("store_count"));
+                Metric metric = new Metric(item.getString("id"), item.getLong("i_count"), item.getLong("load_count"), item.getLong("store_count"));
                 metrics.put(metric.getId(), metric);
 
             }

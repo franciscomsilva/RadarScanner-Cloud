@@ -3,11 +3,11 @@ package pt.ulisboa.tecnico.cnv.models;
 
 public class Metric {
     String id;
-    int i_count;
-    int load_count;
-    int store_count;
+    long i_count;
+    long load_count;
+    long store_count;
 
-    public Metric( String id,int i_count, int load_count, int store_count) {
+    public Metric( String id,long i_count, long load_count, long store_count) {
         this.id = id;
         this.i_count = i_count;
         this.load_count = load_count;
@@ -22,7 +22,7 @@ public class Metric {
         this.id = id;
     }
 
-    public int getI_count() {
+    public long getI_count() {
         return i_count;
     }
 
@@ -30,7 +30,7 @@ public class Metric {
         this.i_count = i_count;
     }
 
-    public int getLoad_count() {
+    public long getLoad_count() {
         return load_count;
     }
 
@@ -38,7 +38,7 @@ public class Metric {
         this.load_count = load_count;
     }
 
-    public int getStore_count() {
+    public long getStore_count() {
         return store_count;
     }
 

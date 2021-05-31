@@ -38,10 +38,12 @@ public class AutoScaler {
     private static final double CPU_LOWER_LOAD = 30;
     /*THIS ROUGHLY CORRESPONDS TO TWO LIGHT REQUESTS PER INSTANCE*/
     private static final double METRIC_UPPER_LOAD = 323059012 * 2;
-    private static final String AMI_IMAGE_ID ="ami-0423040cddd106f1e";
+    private static final String AMI_IMAGE_ID ="ami-05a0cd61a125d0c42";
     private static final String SSH_KEY_NAME = "CNV-proj-key";
     private static final String SECURITY_GROUP_NAME ="CNV-proj-ssh+http";
     private static final String INSTANCE_TYPE_NAME = "t2.micro";
+
+    //646118024 72141285 2183554290 2183554290
 
 
     public static void execute() throws InterruptedException{
@@ -114,8 +116,8 @@ public class AutoScaler {
             }
 
 
-            /*SLEEPS FOR 10 SECONDS*/
-            Thread.sleep(10000);
+            /*SLEEPS FOR 1 MINUTE TO WAIT FOR NEW CLOUDWATCH DATA*/
+            Thread.sleep(60000);
         }
 
     }
@@ -141,14 +143,24 @@ public class AutoScaler {
 
     }
 
-    private static void terminateInstance(String instance_id){
+    public static void resetInstances(){
+        HashSet<Instance> instances = getInstances();
+
+        for(Instance instance: instances){
+            terminateInstance(instance.getInstanceId());
+        }
+
+        createInstances(1);
+    }
+
+    public static void terminateInstance(String instance_id){
         TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
         termInstanceReq.withInstanceIds(instance_id);
         ec2.terminateInstances(termInstanceReq);
         LoadBalancer.getInstances();
     }
 
-    private static void createInstances (int number_instances){
+    public static void createInstances (int number_instances){
         RunInstancesRequest runInstancesRequest =
                 new RunInstancesRequest();
 
@@ -158,7 +170,9 @@ public class AutoScaler {
                 .withMinCount(1)
                 .withMaxCount(number_instances)
                 .withKeyName(SSH_KEY_NAME)
+                .withMonitoring(true)
                 .withSecurityGroups(SECURITY_GROUP_NAME);
+
 
         RunInstancesResult runInstancesResult =
                 ec2.runInstances(runInstancesRequest);
@@ -185,8 +199,7 @@ public class AutoScaler {
         String name = instance.getInstanceId();
         String state = instance.getState().getName();
         double final_average = 0;
-        int counter = 0;
-        long offsetInMilliseconds = 1000 * 60 * 3;
+        long offsetInMilliseconds = 1000 * 60 * 2;
         Dimension instanceDimension = new Dimension();
         instanceDimension.setName("InstanceId");
 
@@ -194,8 +207,8 @@ public class AutoScaler {
         if (state.equals("running")) {
             instanceDimension.setValue(name);
             GetMetricStatisticsRequest request = new GetMetricStatisticsRequest()
-                    /*UTC TO UTC-1*/
-                    .withStartTime(new Date((new Date().getTime() - 1000 * 60 * 60) - offsetInMilliseconds))
+                    /*UTC TIMEZONE IN BOTH MACHINES*/
+                    .withStartTime(new Date(new Date().getTime() - offsetInMilliseconds))
                     .withNamespace("AWS/EC2")
                     .withPeriod(60)
                     .withMetricName("CPUUtilization")
@@ -205,16 +218,15 @@ public class AutoScaler {
             GetMetricStatisticsResult getMetricStatisticsResult =
                     cloudWatch.getMetricStatistics(request);
             List<Datapoint> datapoints = getMetricStatisticsResult.getDatapoints();
+            Date first_date = datapoints.get(0).getTimestamp();
+            final_average = datapoints.get(0).getAverage();
+
             for (Datapoint dp : datapoints) {
-                System.out.println(dp);
-                final_average += dp.getAverage();
-                counter++;
+                /*OUT OF THE TWO DATAPOINTS, PICK THE MOST RECENT ONE*/
+                if(dp.getTimestamp().compareTo(first_date) > 0){
+                    final_average = dp.getAverage();
+                }
             };
-
-            if(counter == 0)
-                counter = 1;
-
-            final_average = (double) final_average /counter;
 
         }
 

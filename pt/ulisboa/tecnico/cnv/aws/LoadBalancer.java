@@ -69,6 +69,10 @@ import com.amazonaws.services.cloudwatch.model.Datapoint;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
 import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.services.ec2.model.RebootInstancesRequest;
+import com.amazonaws.services.ec2.model.RebootInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+
 
 
 
@@ -99,7 +103,7 @@ public class LoadBalancer {
 
 
         /*PERIODIC PULL OF DYNAMO DB REQUESTS*/
-        Runnable task = new Runnable() {
+        Runnable taskPull = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -115,9 +119,45 @@ public class LoadBalancer {
             }
         };
 
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(task, 0L, 1, TimeUnit.MINUTES);
+        /*PERIODIC HEALTH CHECK OF INSTANCES*/
+        Runnable taskHealth = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    System.out.println("LB -> Health Check of Instances\n");
+                    getInstances();
+                    for (Map.Entry<String, Instance> entry : instance_by_id.entrySet()) {
+                        if(!healthCheck(entry.getKey())){
+                            if(entry.getValue().getState().getName().equals("pending"))
+                                continue;
 
+                            /*WAITS FOR POSSIBLE BOOT*/
+                            Thread.sleep(25000);
+                            if(!healthCheck(entry.getKey())){
+                                System.out.println("LB -> Health Check failed on instance " + entry.getKey() + "\n");
+                                AutoScaler.terminateInstance(entry.getKey());
+                                AutoScaler.createInstances(1);
+                                Thread.sleep(60000);
+                                getInstances();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+
+            }
+        };
+
+
+        ScheduledExecutorService schedulerPull = Executors.newScheduledThreadPool(1);
+        schedulerPull.scheduleAtFixedRate(taskPull, 0L, 1, TimeUnit.MINUTES);
+
+        ScheduledExecutorService schedulerHealth = Executors.newScheduledThreadPool(1);
+        schedulerHealth.scheduleAtFixedRate(taskHealth, 0L, 2, TimeUnit.MINUTES);
+
+        /*ALLOW TO GET INSTANCES*/
+        Thread.sleep(3000);
 
         /*CREATES WEB SERVER*/
         final HttpServer server = HttpServer.create(new InetSocketAddress(LoadBalancer.sap.getServerAddress(), 80), 0);
@@ -199,21 +239,21 @@ public class LoadBalancer {
             Metric finalMetrics = null;
             boolean flagEqual = false;
 
-            int i_count_scan = 0;
-            int load_count_scan = 0;
-            int store_count_scan = 0;
+            long i_count_scan = 0;
+            long load_count_scan = 0;
+            long store_count_scan = 0;
 
-            int i_count_map = 0;
-            int load_count_map = 0;
-            int store_count_map = 0;
+            long i_count_map = 0;
+            long load_count_map = 0;
+            long store_count_map = 0;
 
-            int i_count_area = 0;
-            int load_count_area = 0;
-            int store_count_area = 0;
+            long i_count_area = 0;
+            long load_count_area = 0;
+            long store_count_area = 0;
 
-            double i_count_final = 0;
-            double load_count_final = 0;
-            double store_count_final = 0;
+            long i_count_final = 0;
+            long load_count_final = 0;
+            long store_count_final = 0;
 
             int counter_scan = 0, counter_map = 0, counter_area = 0;
 
@@ -226,6 +266,7 @@ public class LoadBalancer {
                     break;
                 }
             }
+
 
             /*NO REQUEST EXACTLY EQUAL TO THE ONE RECEIVED*/
             if (!flagEqual) {
@@ -302,16 +343,16 @@ public class LoadBalancer {
                 } else {
                     weights_position[0] = weights_position[2] = weights_position[4] = weights_position[6] = 0;
                 }
-                int position =  Arrays.asList(weights_position).indexOf(1);
+                int position = Arrays.asList(weights_position).indexOf(1);
                 scan_weight = weights_matrix[position][0];
                 map_weight = weights_matrix[position][1];
                 area_weight = weights_matrix[position][2];
 
 
                 /*CALCULATES FINAL VALUES USING A PERCENTAGE OF WEIGHT THE  PARAMETERS - SCAN TYPE IS THE MOST IMPORTANTE, FOLLOWED BY MAP AND BY AREA*/
-                i_count_final = (int) scan_weight * i_count_scan + (int) map_weight * i_count_map + (int) area_weight * i_count_area;
-                load_count_final = (int) scan_weight * load_count_scan + (int) map_weight * load_count_map + (int) area_weight * load_count_area;
-                store_count_final = (int) scan_weight * store_count_scan + (int) map_weight * store_count_map + (int) area_weight * store_count_area;
+                i_count_final = (long) scan_weight * i_count_scan + (long) map_weight * i_count_map + (long) area_weight * i_count_area;
+                load_count_final = (long) scan_weight * load_count_scan + (long) map_weight * load_count_map + (long) area_weight * load_count_area;
+                store_count_final = (long) scan_weight * store_count_scan + (long) map_weight * store_count_map + (long) area_weight * store_count_area;
 
 
             }
@@ -321,35 +362,82 @@ public class LoadBalancer {
                 i_count_final = final_metric.getI_count();
                 load_count_final = final_metric.getLoad_count();
                 store_count_final = final_metric.getStore_count();
-            }
 
+            }
 
             /*CALCULATE WEIGHT BASED ON METRICS*/
-            double final_request_weight =  ((double) i_count_final * 0.5 + (double) load_count_final * 0.25 + (double) store_count_final * 0.25) ;
+            double final_request_weight = ((double) i_count_final * 0.5 + (double) load_count_final * 0.25 + (double) store_count_final * 0.25);
+
+            if(final_request_weight == 0)
+                final_request_weight = 323059012 * 2;
+
             getInstances();
-
-            /*ANALYZES CURRENT LOAD OF ALL INSTANCES AND CHOOSES INSTANCE WITH LEAST LOAD*/
-
-            Map.Entry<String,Double> first_entry = instance_load.entrySet().iterator().next();
+            Instance instance = null;
+            boolean flagExit = false;
+            int exitCounter = 0;
+            Map.Entry<String, Double> first_entry = instance_load.entrySet().iterator().next();
             double min_load = first_entry.getValue();
             String instance_id = first_entry.getKey();
-            for (Map.Entry<String, Double> entry : instance_load.entrySet()) {
-                if (entry.getValue() < min_load) {
-                    min_load = entry.getValue();
-                    instance_id = entry.getKey();
+            HashMap<String, Double> local_instance_load = instance_load;
+            HashMap<String, Instance> local_instance_by_id = instance_by_id;
+
+            while (!flagExit && exitCounter < 10){
+                /*ANALYZES CURRENT LOAD OF ALL INSTANCES AND CHOOSES INSTANCE WITH LEAST LOAD*/
+                for (Map.Entry<String, Double> entry : local_instance_load.entrySet()) {
+                    if (entry.getValue() < min_load) {
+                        min_load = entry.getValue();
+                        instance_id = entry.getKey();
+                    }
                 }
+                /*GET INSTANCES*/
+                instance = local_instance_by_id.get(instance_id);
+
+                try{
+                    if(healthCheck(instance_id)) {
+                        flagExit = true;
+                        System.out.println("LB -> Redirecting request " + local_request_counter + " to instance " + instance_id + "\n");
+                    }else{
+                        /*IF ONLY INSTANCE AVAILABLE REMOVE AND CREATE ANOTHER ONE*/
+                        System.err.println("LB -> ERROR: Instance " + instance.getInstanceId() + " not responsive. Resetting!\n");
+                        if(local_instance_by_id.size() <= 1){
+                            AutoScaler.terminateInstance(instance_id);
+                            instance_by_id.remove(instance_id);
+                            instance_load.remove(instance_id);
+                            AutoScaler.createInstances(1);
+                            Thread.sleep(60000);
+                            getInstances();
+                            local_instance_by_id = instance_by_id;
+                            local_instance_load = instance_load;
+                            first_entry = local_instance_load.entrySet().iterator().next();
+                            min_load = first_entry.getValue();
+                            instance_id = first_entry.getKey();
+                        /*IF OTHER INSTANCES EXIST, REDIRECT TO ANOTHER AND ALLOW PERIODIC HEALTH CHECK TO REMOVE IF IT STILL DOESNT RESPOND*/
+                        }else{
+                            /*REMOVES FROM THE LOCAL LIST TO CHOOSE ANOTHER AND REBOOT*/
+                            local_instance_load.remove(instance_id);
+                            local_instance_by_id.remove(instance_id);
+
+                            RebootInstancesRequest request = new RebootInstancesRequest()
+                                    .withInstanceIds(instance_id);
+
+                            RebootInstancesResult response = ec2.rebootInstances(request);
+
+                        }
+                    }
+                }catch(Exception e ){
+                    System.err.println("LB-> ERROR: " + e.getMessage() + "\n");
+                    e.printStackTrace();
+                }
+
+                exitCounter++;
             }
 
-            /*GET INSTANCES*/
-            Instance instance = instance_by_id.get(instance_id);
-            System.out.println("LB -> Redirecting request " + local_request_counter + " to instance " + instance_id + "\n");
 
             /*ROUTE REQUEST TO THAT INSTANCE*/
             /*ADDS LOAD*/
             double current_instance_load = instance_load.get(instance_id);
             current_instance_load += final_request_weight;
             instance_load.put(instance_id, current_instance_load);
-            String instance_ip = instance.getPublicIpAddress();
 
             /*ROUTES REQUEST TO INSTANCE*/
             final Headers hdrs = t.getResponseHeaders();
@@ -362,7 +450,7 @@ public class LoadBalancer {
 
             HttpURLConnection connection = null;
             try{
-                connection = sendRequestToInstance(instance_ip, query);
+                connection = sendRequestToInstance(instance_id, query);
             }catch(Exception e){
                 System.err.println("ERROR: " + e.getMessage());
                 return;
@@ -402,29 +490,73 @@ public class LoadBalancer {
 
     }
 
-    private static HttpURLConnection sendRequestToInstance(String instanceIP, String query) throws IOException {
+    private static HttpURLConnection sendRequestToInstance(String instance_id, String query) throws IOException {
+        Instance instance = instance_by_id.get(instance_id);
 
-        URL url = new URL("http://" + instanceIP + ":" + INSTANCE_PORT + "/scan?" + query);
+        URL url = new URL("http://" + instance.getPublicIpAddress() + ":" + INSTANCE_PORT + "/scan?" + query);
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        //int status = connection.getResponseCode();
 
         return connection;
     }
 
+    public static boolean healthCheck(String instance_id) throws Exception{
+        /*GETS UPDATED INSTANCE IN CASE IP WAS NOT AVAILABLE YET*/
+        Instance instance = getInstance(instance_id);
+
+        /*CHECKS 3 TIMES*/
+        URL url = new URL("http://" + instance.getPublicIpAddress() + ":" + INSTANCE_PORT + "/test");
+        int status = 0, counter = 0;
+        while(counter < 3){
+            try{
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                status = connection.getResponseCode();
+                connection.disconnect();
+                if(status == 200)
+                    return true;
+
+                Thread.sleep(500);
+            }catch(Exception e){
+
+            }
+            counter++;
+        }
+
+        return false;
+    }
+
+    public static Instance getInstance(String instance_id){
+        ArrayList<String> instances_ids = new ArrayList<>();
+        instances_ids.add(instance_id);
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.setInstanceIds(instances_ids);
+        DescribeInstancesResult describeInstancesResult = ec2.describeInstances(request);
+        List<Reservation> reservations = describeInstancesResult.getReservations();
+
+        for (Reservation reservation : reservations) {
+            List<Instance> instances = reservation.getInstances();
+            if(instances.size() == 1)
+                return instances.get(0);
+        }
+        return null;
+    }
 
     public static void getInstances() {
         DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
         List<Reservation> reservations = describeInstancesRequest.getReservations();
-
+        double load = 0.0;
         for (Reservation reservation : reservations) {
             List<Instance> instances = reservation.getInstances();
             for (Instance instance : instances) {
+                load = 0.0;
                 if(instance.getState().getName().equals("running") || instance.getState().getName().equals("pending")){
                     String instance_id = instance.getInstanceId();
-                    if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id))
-                        continue;
-                    instance_load.put(instance_id, 0.0);
+
+                    /*IF INSTANCE ALREADY EXISTS COPYS LOAD AND UPDATE, SOME DATA MIGHT NOT BE UPDATED*/
+                    if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id)){
+                        load = instance_load.get(instance_id);
+                    }
+                    instance_load.put(instance_id, load);
                     instance_by_id.put(instance_id, instance);
                 }
 
