@@ -220,8 +220,15 @@ public class AutoScaler {
             GetMetricStatisticsResult getMetricStatisticsResult =
                     cloudWatch.getMetricStatistics(request);
             List<Datapoint> datapoints = getMetricStatisticsResult.getDatapoints();
-            Date first_date = datapoints.get(0).getTimestamp();
-            final_average = datapoints.get(0).getAverage();
+
+            Date first_date = null;
+            if(datapoints.size() > 0){
+                first_date = datapoints.get(0).getTimestamp();
+                final_average = datapoints.get(0).getAverage();
+            }else{
+                final_average = 0;
+            }
+
 
             for (Datapoint dp : datapoints) {
                 /*OUT OF THE TWO DATAPOINTS, PICK THE MOST RECENT ONE*/

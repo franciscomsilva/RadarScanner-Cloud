@@ -557,9 +557,9 @@ public class LoadBalancer {
                     String instance_id = instance.getInstanceId();
 
                     /*IF INSTANCE ALREADY EXISTS COPYS LOAD AND UPDATE, SOME DATA MIGHT NOT BE UPDATED*/
-                    if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id)){
+                    if(instance_load.containsKey(instance_id) && instance_by_id.containsKey(instance_id))
                         load = instance_load.get(instance_id);
-                    }
+
                     instance_load.put(instance_id, load);
                     instance_by_id.put(instance_id, instance);
                 }
